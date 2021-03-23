@@ -1447,22 +1447,22 @@ void disp_language_init() {
               more_menu.custom6 = MORE_CUSTOM6_TEXT_EN;
             #endif
 
-            #ifdef USER_DESC_1
+            #ifdef MAIN_MENU_ITEM_1_DESC
               more_menu.custom1 = MORE_CUSTOM1_TEXT_EN;
             #endif
-            #ifdef USER_DESC_2
+            #ifdef MAIN_MENU_ITEM_2_DESC
               more_menu.custom2 = MORE_CUSTOM2_TEXT_EN;
             #endif
-            #ifdef USER_DESC_3
+            #ifdef MAIN_MENU_ITEM_3_DESC
               more_menu.custom3 = MORE_CUSTOM3_TEXT_EN;
             #endif
-            #ifdef USER_DESC_4
+            #ifdef MAIN_MENU_ITEM_4_DESC
               more_menu.custom4 = MORE_CUSTOM4_TEXT_EN;
             #endif
-            #ifdef USER_DESC_5
+            #ifdef MAIN_MENU_ITEM_5_DESC
               more_menu.custom5 = MORE_CUSTOM5_TEXT_EN;
             #endif
-            #ifdef USER_DESC_6
+            #ifdef MAIN_MENU_ITEM_6_DESC
               more_menu.custom6 = MORE_CUSTOM6_TEXT_EN;
             #endif
             //
