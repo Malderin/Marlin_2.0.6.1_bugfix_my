@@ -104,7 +104,6 @@ static void event_handler(lv_obj_t *obj, lv_event_t event) {
         }
       #endif
       break;
-
     case ID_STOP:
       lv_clear_printing();
       lv_draw_dialog(DIALOG_TYPE_STOP);
@@ -114,23 +113,23 @@ static void event_handler(lv_obj_t *obj, lv_event_t event) {
       lv_draw_operation();
       break;
     case ID_TEMP_EXT:
-          uiCfg.curTempType = 0;
-          lv_clear_printing();
-          lv_draw_preHeat();
-          break;
+      uiCfg.curTempType = 0;
+      lv_clear_printing();
+      lv_draw_preHeat();
+      break;
     case ID_TEMP_BED:
-              uiCfg.curTempType = 1;
-              lv_clear_printing();
-              lv_draw_preHeat();
-              break;
+      uiCfg.curTempType = 1;
+      lv_clear_printing();
+      lv_draw_preHeat();
+      break;
     case ID_BABYSTEP:
-            lv_clear_printing();
-            lv_draw_baby_stepping();
-            break;
+      lv_clear_printing();
+      lv_draw_baby_stepping();
+      break;
     case ID_FAN:
-            lv_clear_printing();
-            lv_draw_fan();
-            break;
+      lv_clear_printing();
+      lv_draw_fan();
+      break;
   }
 }
 
