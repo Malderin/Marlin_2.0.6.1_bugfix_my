@@ -59,38 +59,11 @@ static lv_obj_t *labelExt1, *labelExt1Target, *labelFan;
   static lv_obj_t *labelBed, *labelBedTarget;
 #endif
 
-/*
-
-static lv_obj_t *labelExt1;
-
-TERN_(HAS_MULTI_EXTRUDER, static lv_obj_t *labelExt2);
-#if HAS_HEATED_BED
-  static lv_obj_t* labelBed;
-
-*/
-
-
 #if ENABLED(MKS_TEST)
   uint8_t curent_disp_ui = 0;
 #endif
 
-enum { ID_TOOL = 1, ID_SET, ID_PRINT, ID_INFO_EXT, ID_INFO_BED };
-
-
-/*
-
-enum {
-  ID_TOOL = 1,
-  ID_SET,
-  ID_PRINT,
-  ID_INFO_EXT,
-  ID_INFO_BED
-};
-
-*/
-
-
-
+enum { ID_TOOL = 1, ID_SET, ID_PRINT, ID_INFO_EXT, ID_INFO_BED, ID_INFO_FAN };
 
 static void event_handler(lv_obj_t *obj, lv_event_t event) {
   if (event != LV_EVENT_RELEASED) return;
@@ -100,32 +73,8 @@ static void event_handler(lv_obj_t *obj, lv_event_t event) {
     case ID_SET:    lv_draw_set(); break;
     case ID_INFO_EXT:  uiCfg.curTempType = 0; lv_draw_preHeat(); break;
     case ID_INFO_BED:  uiCfg.curTempType = 1; lv_draw_preHeat(); break;
+    case ID_INFO_FAN:  lv_draw_fan(); break;
     case ID_PRINT:  lv_draw_print_file(); break;
-
-
-/*
-
-    case ID_TOOL:
-      lv_draw_tool();
-      break;
-    case ID_SET:
-      lv_draw_set();
-      break;
-    case ID_INFO_EXT:
-        uiCfg.curTempType = 0;
-        lv_draw_preHeat();
-        break;
-    case ID_INFO_BED:
-          uiCfg.curTempType = 1;
-          lv_draw_preHeat();
-          break;
-    case ID_PRINT:
-      lv_draw_print_file();
-      break;
-
-*/
-
-
   }
 }
 
@@ -235,32 +184,14 @@ void lv_draw_ready_print() {
     lv_big_button_create(scr, "F:/bmp_printing.bin", main_menu.print, 340, 180, event_handler, ID_PRINT);
 
     // Monitoring
-    lv_obj_t *buttonExt1 = lv_img_create(scr, NULL);
+    lv_obj_t *buttonExt1 = lv_big_button_create(scr, "F:/bmp_ext1_state.bin", " ", 55, ICON_POS_Y, event_handler, ID_INFO_EXT);
     #if HAS_MULTI_EXTRUDER
-      lv_obj_t *buttonExt2 = lv_img_create(scr, NULL);
+        lv_obj_t *buttonExt2 = lv_big_button_create(scr, "F:/bmp_ext2_state.bin", " ", 55, ICON_POS_Y + SECOND_EXT_MOD_Y, event_handler, ID_INFO_EXT);
     #endif
     #if HAS_HEATED_BED
-      lv_obj_t *buttonBedstate = lv_img_create(scr, NULL);
+        lv_obj_t *buttonBedstate = lv_big_button_create(scr, "F:/bmp_bed_state.bin", " ", 210, ICON_POS_Y, event_handler, ID_INFO_BED);
     #endif
-    lv_obj_t *buttonFanstate = lv_img_create(scr, NULL);
-
-    lv_img_set_src(buttonExt1, "F:/bmp_ext1_state.bin");
-    #if HAS_MULTI_EXTRUDER
-      lv_img_set_src(buttonExt2, "F:/bmp_ext2_state.bin");
-    #endif
-    #if HAS_HEATED_BED
-      lv_img_set_src(buttonBedstate, "F:/bmp_bed_state.bin");
-    #endif
-    lv_img_set_src(buttonFanstate, "F:/bmp_fan_state.bin");
-
-    lv_obj_set_pos(buttonExt1, 55, ICON_POS_Y);
-    #if HAS_MULTI_EXTRUDER
-      lv_obj_set_pos(buttonExt2, 55, ICON_POS_Y + SECOND_EXT_MOD_Y);
-    #endif
-    #if HAS_HEATED_BED
-      lv_obj_set_pos(buttonBedstate, 210, ICON_POS_Y);
-    #endif
-    lv_obj_set_pos(buttonFanstate, 380, ICON_POS_Y);
+      lv_obj_t *buttonFanstate = lv_big_button_create(scr, "F:/bmp_fan_state.bin", " ", 380, ICON_POS_Y, event_handler, ID_INFO_FAN);
 
     labelExt1 = lv_label_create(scr, 55, LABEL_MOD_Y, nullptr);
     labelExt1Target = lv_label_create(scr, 55, LABEL_MOD_Y, nullptr);
@@ -305,20 +236,6 @@ void lv_draw_ready_print() {
     sprintf_P(buf, PSTR("%d%%"), thermalManager.fanPercent(thermalManager.fan_speed[0]));
     lv_label_set_text(labelFan, buf);
     lv_obj_align(labelFan, buttonFanstate, LV_ALIGN_CENTER, 0, LABEL_MOD_Y);
-
-
-
-/*
-
-    lv_big_button_create(scr, "F:/bmp_tool.bin", main_menu.tool, 20, 90, event_handler, ID_TOOL);
-    lv_big_button_create(scr, "F:/bmp_set.bin", main_menu.set, 180, 90, event_handler, ID_SET);
-    lv_big_button_create(scr, "F:/bmp_printing.bin", main_menu.print, 340, 90, event_handler, ID_PRINT);
-    lv_temp_info();
-
-*/
-
-
-
   }
 
   #if ENABLED(TOUCH_SCREEN_CALIBRATION)
@@ -328,32 +245,6 @@ void lv_draw_ready_print() {
       lv_draw_touch_calibration_screen();
     }
   #endif
-}
-
-void lv_temp_info() {
-  // Malderin
-  // Create image buttons
-
-  #if HAS_HEATED_BED
-    lv_big_button_create(scr, "F:/bmp_bed_state.bin", " ", 20, 260, event_handler, ID_INFO_BED);
-  #endif
-
-  lv_big_button_create(scr, "F:/bmp_ext1_state.bin", " ", 180, 260, event_handler, ID_INFO_EXT);
-
-  #if HAS_MULTI_EXTRUDER
-    lv_big_button_create(scr, "F:/bmp_ext2_state.bin", " ", 325, 260, event_handler, ID_INFO_EXT);
-  #endif
-
-  #if HAS_HEATED_BED
-    labelBed = lv_label_create(scr, 70, 270, nullptr);
-    #endif
-
-    labelExt1 = lv_label_create(scr, 230, 270, nullptr);
-
-    #if HAS_MULTI_EXTRUDER
-      labelExt2 = lv_label_create(scr, 375, 270, nullptr);
-    #endif
-    lv_temp_refr();
 }
 
 void lv_temp_refr() {

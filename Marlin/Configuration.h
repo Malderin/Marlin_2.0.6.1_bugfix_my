@@ -2570,7 +2570,7 @@
   #define BUTTON_DELAY_EDIT  50 // (ms) Button repeat delay for edit screens
   #define BUTTON_DELAY_MENU 250 // (ms) Button repeat delay for menus
 
-//  #define TOUCH_SCREEN_CALIBRATION
+  #define TOUCH_SCREEN_CALIBRATION
 
   //#define TOUCH_CALIBRATION_X 12316
   //#define TOUCH_CALIBRATION_Y -8981
@@ -2736,7 +2736,7 @@
 // Edit servo angles with M281 and save to EEPROM with M500
 //#define EDITABLE_SERVO_ANGLES
 
-
+/*
 //Malderin
 #if ENABLED(TFT_LVGL_UI)
   #define TOUCH_CALIBRATION_X -17253
@@ -2744,3 +2744,4 @@
   #define TOUCH_OFFSET_X       514
   #define TOUCH_OFFSET_Y       -24
 #endif
+*/
