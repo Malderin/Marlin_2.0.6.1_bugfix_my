@@ -515,9 +515,10 @@
 //  #define DEFAULT_Ki 2.76
 //  #define DEFAULT_Kd 61.70
 
-  #define DEFAULT_Kp 18.68
-  #define DEFAULT_Ki 1.69
-  #define DEFAULT_Kd 51.68
+#define DEFAULT_Kp 15.96
+#define DEFAULT_Ki 1.25
+#define DEFAULT_Kd 50.86
+
 
   #endif
 #endif // PIDTEMP
@@ -560,9 +561,11 @@
   //#define DEFAULT_bedKp 10.00
   //#define DEFAULT_bedKi .023
   //#define DEFAULT_bedKd 305.4
-#define DEFAULT_bedKp 63.10
-#define DEFAULT_bedKi 11.93
-#define DEFAULT_bedKd 222.57
+
+#define DEFAULT_bedKp 15.53
+#define DEFAULT_bedKi 1.29
+#define DEFAULT_bedKd 124.54
+
 
   // 120V 250W silicone heater into 4mm borosilicate (MendelMax 1.5+)
   // from FOPDT model - kp=.39 Tp=405 Tdead=66, Tc set to 79.2, aggressive factor of .15 (vs .1, 1, 10)
@@ -812,7 +815,7 @@
  *                                      X, Y, Z, E0 [, E1[, E2...]]
  */
 //#define DEFAULT_AXIS_STEPS_PER_UNIT   { 160, 160, 804, 421 }
-#define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 400, 350.8 }
+#define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80.4, 400, 350.8 }
 
 /**
  * Default Max Feed Rate (mm/s)
