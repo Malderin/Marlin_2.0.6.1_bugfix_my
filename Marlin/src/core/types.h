@@ -25,7 +25,6 @@
 #include <stddef.h>
 
 #include "../inc/MarlinConfigPre.h"
-#include "temp_types.h"
 
 class __FlashStringHelper;
 typedef const __FlashStringHelper *progmem_str;
@@ -73,6 +72,11 @@ struct IF<true, L, R> { typedef L type; };
 //
 typedef float feedRate_t;
 
+//
+// celsius_t is the native unit of temperature. Signed to handle a disconnected thermistor value (-14).
+// For more resolition (e.g., for a chocolate printer) this may later be changed to Celsius x 100
+//
+typedef int16_t celsius_t;
 
 //
 // On AVR pointers are only 2 bytes so use 'const float &' for 'const float'

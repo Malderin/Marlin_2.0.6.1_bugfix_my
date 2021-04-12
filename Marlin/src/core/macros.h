@@ -117,16 +117,14 @@
 
   // C++11 solution that is standards compliant.
   template <class V, class N> static inline constexpr void NOLESS(V& v, const N n) {
-    __typeof__(v) _n = n;
-    if (v < _n) v = _n;
+    if (n > v) v = n;
   }
   template <class V, class N> static inline constexpr void NOMORE(V& v, const N n) {
-    __typeof__(v) _n = n;
-    if (v > _n) v = _n;
+    if (n < v) v = n;
   }
   template <class V, class N1, class N2> static inline constexpr void LIMIT(V& v, const N1 n1, const N2 n2) {
-    __typeof__(v) _n1 = n1, _n2 = n2;
-    if (v < _n1) v = _n1; else if (v > _n2) v = _n2;
+    if (n1 > v) v = n1;
+    else if (n2 < v) v = n2;
   }
 
 #else
@@ -134,19 +132,21 @@
   #define NOLESS(v, n) \
     do{ \
       __typeof__(v) _n = (n); \
-      if (v < _n) v = _n; \
+      if (_n > v) v = _n; \
     }while(0)
 
   #define NOMORE(v, n) \
     do{ \
       __typeof__(v) _n = (n); \
-      if (v > _n) v = _n; \
+      if (_n < v) v = _n; \
     }while(0)
 
   #define LIMIT(v, n1, n2) \
     do{ \
-      __typeof__(v) _n1 = (n1), _n2 = (n2); \
-     if (v < _n1) v = _n1; else if (v > _n2) v = _n2; \
+      __typeof__(v) _n1 = (n1); \
+      __typeof__(v) _n2 = (n2); \
+      if (_n1 > v) v = _n1; \
+      else if (_n2 < v) v = _n2; \
     }while(0)
 
 #endif
@@ -345,16 +345,6 @@
 
     template <typename T, typename ... Args> struct first_type_of { typedef T type; };
     template <typename T> struct first_type_of<T> { typedef T type; };
-
-    // Useful for r-value optimization
-    template <class T> struct remove_reference { typedef T type; };
-    template <class T> struct remove_reference<T&> { typedef T type; };
-    template <class T>  struct remove_reference<T&&> { typedef T type; };
-
-    template<typename T> constexpr typename remove_reference<T>::type&& move(T && t) noexcept { return static_cast<typename remove_reference<T>::type&&>(t); }
-    template<typename T> constexpr T&& forward(typename remove_reference<T>::type& t) noexcept { return static_cast<T&&>(t); }
-    template<typename T> constexpr T&& forward(typename remove_reference<T>::type&& t) noexcept { return static_cast<T&&>(t); }
-
   }
   // C++11 solution using SFINAE to detect the existance of a member in a class at compile time.
   // It creates a HasMember<Type> structure containing 'value' set to true if the member exists
