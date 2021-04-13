@@ -198,7 +198,7 @@ typedef struct {
   uint8_t   wifi_type;
   bool      cloud_enable,
             encoder_enable;
-  xy_int_t  trammingPos[5];
+  int       trammingPos[5][2]; // XY
   int       filamentchange_load_length,
             filamentchange_load_speed,
             filamentchange_unload_length,

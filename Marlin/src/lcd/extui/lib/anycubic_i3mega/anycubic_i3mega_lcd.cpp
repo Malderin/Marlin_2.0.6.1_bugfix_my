@@ -583,7 +583,8 @@ void AnycubicTFTClass::GetCommandFromTFT() {
           } break;
 
           case 4: { // A4 GET FAN SPEED
-            SEND_PGM_VAL("A4V ", int(getActualFan_percent(FAN0)));
+            const float fanPercent = getActualFan_percent(FAN0);
+            SEND_PGM_VAL("A4V ", int(LIMIT(fanPercent, 0, 100)));
           } break;
 
           case 5: { // A5 GET CURRENT COORDINATE
