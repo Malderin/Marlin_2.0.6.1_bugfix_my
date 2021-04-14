@@ -25,7 +25,7 @@
 #define FTDI_BED_MESH_EDIT_SCREEN_CLASS BedMeshEditScreen
 
 struct BedMeshEditScreenData {
-  bool needSave, savedMeshLevelingState, savedEndstopState;
+  bool needSave;
   xy_uint8_t highlight;
   float zAdjustment;
 };
@@ -41,7 +41,6 @@ class BedMeshEditScreen : public BedMeshBase, public CachedScreen<BED_MESH_EDIT_
     static void drawHighlightedPointValue();
   public:
     static void onEntry();
-    static void onExit();
     static void onRedraw(draw_mode_t);
     static bool onTouchHeld(uint8_t tag);
     static bool onTouchEnd(uint8_t tag);

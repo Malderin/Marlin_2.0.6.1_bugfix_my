@@ -77,7 +77,6 @@
 #include "draw_homing_sensitivity_settings.h"
 #include "draw_baby_stepping.h"
 #include "draw_keyboard.h"
-#include "draw_media_select.h"
 #include "draw_encoder_settings.h"
 
 #include "../../../../inc/MarlinConfigPre.h"
@@ -292,7 +291,7 @@ typedef enum {
   TOOL_UI,
   HARDWARE_TEST_UI,
   WIFI_LIST_UI,
-  KEYBOARD_UI,
+  KEY_BOARD_UI,
   WIFI_TIPS_UI,
   MACHINE_PARA_UI,
   MACHINE_SETTINGS_UI,
@@ -330,7 +329,6 @@ typedef enum {
   ENCODER_SETTINGS_UI,
   TOUCH_CALIBRATION_UI,
   GCODE_UI,
-  MEDIA_SELECT_UI,
 } DISP_STATE;
 
 typedef struct {

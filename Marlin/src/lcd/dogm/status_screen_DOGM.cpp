@@ -136,7 +136,7 @@
     #if ENABLED(POWER_MONITOR_CURRENT)
       const bool iflag = power_monitor.current_display_enabled();
     #endif
-    #if ENABLED(POWER_MONITOR_VOLTAGE)
+    #if HAS_POWER_MONITOR_VREF
       const bool vflag = power_monitor.voltage_display_enabled();
     #endif
 
@@ -148,7 +148,7 @@
       }
     #elif ENABLED(POWER_MONITOR_CURRENT)
       power_monitor.display_item = 0;
-    #elif ENABLED(POWER_MONITOR_VOLTAGE)
+    #elif HAS_POWER_MONITOR_VREF
       power_monitor.display_item = 1;
     #endif
 
@@ -157,7 +157,7 @@
       #if ENABLED(POWER_MONITOR_CURRENT)
         if (power_monitor.display_item == 0 && !iflag) ++power_monitor.display_item;
       #endif
-      #if ENABLED(POWER_MONITOR_VOLTAGE)
+      #if HAS_POWER_MONITOR_VREF
         if (power_monitor.display_item == 1 && !vflag) ++power_monitor.display_item;
       #endif
       #if HAS_POWER_MONITOR_WATTS
@@ -170,7 +170,7 @@
       #if ENABLED(POWER_MONITOR_CURRENT)                // Current
         case 0: if (iflag) power_monitor.draw_current(); break;
       #endif
-      #if ENABLED(POWER_MONITOR_VOLTAGE)                        // Voltage
+      #if HAS_POWER_MONITOR_VREF                        // Voltage
         case 1: if (vflag) power_monitor.draw_voltage(); break;
       #endif
       #if HAS_POWER_MONITOR_WATTS                       // Power
