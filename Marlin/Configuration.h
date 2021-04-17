@@ -515,10 +515,9 @@
 //  #define DEFAULT_Ki 2.76
 //  #define DEFAULT_Kd 61.70
 
-#define DEFAULT_Kp 15.96
-#define DEFAULT_Ki 1.25
-#define DEFAULT_Kd 50.86
-
+#define DEFAULT_Kp 16.47
+#define DEFAULT_Ki 1.30
+#define DEFAULT_Kd 52.15
 
   #endif
 #endif // PIDTEMP
@@ -1571,7 +1570,7 @@
  * Useful to retract or move the Z probe out of the way.
  */
 //#define Z_PROBE_END_SCRIPT "G1 Z10 F12000\nG1 X15 Y330\nG1 Z0.5\nG1 Z10"
-#define Z_PROBE_END_SCRIPT "M500\nM501"
+//#define Z_PROBE_END_SCRIPT "M500\nM501"
 
 // @section homing
 
