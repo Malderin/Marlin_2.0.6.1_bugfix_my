@@ -139,21 +139,21 @@ void lv_draw_printing() {
   scr = lv_screen_create(PRINTING_UI);
 
   // Create image buttons
-  buttonExt1 = lv_imgbtn_create(scr, "F:/bmp_ext1_state.bin", 205, 136, event_handler, ID_TEMP_EXT);
+  buttonExt1 = lv_imgbtn_create(scr, "F:/bmp_ext1_state.bin", 206, 136, event_handler, ID_TEMP_EXT);
 
   #if HAS_MULTI_EXTRUDER
     buttonExt2 = lv_imgbtn_create(scr, "F:/bmp_ext2_state.bin", 350, 136, event_handler, ID_TEMP_EXT);
   #endif
 
   #if HAS_HEATED_BED
-    buttonBedstate = lv_imgbtn_create(scr, "F:/bmp_bed_state.bin", 205, 186, event_handler, ID_TEMP_BED);
+    buttonBedstate = lv_imgbtn_create(scr, "F:/bmp_bed_state.bin", 206, 186, event_handler, ID_TEMP_BED);
   #endif
 
   buttonFanstate = lv_imgbtn_create(scr, "F:/bmp_fan_state.bin", 350, 186, event_handler, ID_FAN);
 
   lv_obj_t *buttonTime = lv_img_create(scr, nullptr);
   lv_img_set_src(buttonTime, "F:/bmp_time_state.bin");
-  lv_obj_set_pos(buttonTime, 205, 86);
+  lv_obj_set_pos(buttonTime, 206, 86);
 
   buttonZpos = lv_imgbtn_create(scr, "F:/bmp_zpos_state.bin", 350, 86, event_handler, ID_BABYSTEP);
 
@@ -251,8 +251,7 @@ void disp_print_time() {
 }
 
 void disp_fan_Zpos() {
-  char str_1[16];
-  sprintf_P(public_buf_l, PSTR("%s"), dtostrf(current_position[Z_AXIS], 1, 3, str_1));
+  dtostrf(current_position.z, 1, 3, public_buf_l);
   lv_label_set_text(labelZpos, public_buf_l);
 }
 

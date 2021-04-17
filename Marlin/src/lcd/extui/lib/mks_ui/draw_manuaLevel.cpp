@@ -55,7 +55,7 @@ static void event_handler(lv_obj_t *obj, lv_event_t event) {
           queue.inject_P(G28_STR);
         }
         const int ind = obj->mks_obj_id - ID_M_POINT1;
-        sprintf_P(public_buf_l, PSTR("G1 Z10\nG1 X%d Y%d\nG1 Z0"), (int)gCfgItems.trammingPos[ind][X_AXIS], (int)gCfgItems.trammingPos[ind][Y_AXIS]);
+        sprintf_P(public_buf_l, PSTR("G1Z10\nG1X%dY%d\nG1Z0"), gCfgItems.trammingPos[ind].x, gCfgItems.trammingPos[ind].y);
         queue.inject(public_buf_l);
       }
       break;
@@ -66,7 +66,6 @@ static void event_handler(lv_obj_t *obj, lv_event_t event) {
         queue.inject_P(PSTR("M84"));
       }
       break;
-
     case ID_MANUAL_RETURN:
       lv_clear_manualLevel();
       lv_draw_tool();
@@ -83,7 +82,6 @@ void lv_draw_manualLevel() {
   lv_big_button_create(scr, "F:/bmp_leveling3.bin", leveling_menu.position3, BTN_X_PIXEL * 2 + INTERVAL_V * 3, titleHeight, event_handler, ID_M_POINT3);
   lv_big_button_create(scr, "F:/bmp_leveling2.bin", leveling_menu.position4, BTN_X_PIXEL * 3 + INTERVAL_V * 4, titleHeight, event_handler, ID_M_POINT4);
   lv_big_button_create(scr, "F:/bmp_leveling5.bin", leveling_menu.position5, INTERVAL_V, BTN_Y_PIXEL + INTERVAL_H + titleHeight, event_handler, ID_M_POINT5);
-  lv_big_button_create(scr, "F:/bmp_function1.bin", set_menu.motoroff, BTN_X_PIXEL+INTERVAL_V*2, BTN_Y_PIXEL+INTERVAL_H+titleHeight, event_handler, ID_M_OFF_ALL);
   lv_big_button_create(scr, "F:/bmp_return.bin", common_menu.text_back, BTN_X_PIXEL * 3 + INTERVAL_V * 4, BTN_Y_PIXEL + INTERVAL_H + titleHeight, event_handler, ID_MANUAL_RETURN);
 }
 
