@@ -371,10 +371,9 @@ int8_t ChironTFT::FindToken(char c) {
 
 void ChironTFT::CheckHeaters() {
   uint8_t faultDuration = 0;
-  float temp = 0;
 
   // if the hotend temp is abnormal, confirm state before signalling panel
-  temp = getActualTemp_celsius(E0);
+  celsius_float_t temp = getActualTemp_celsius(E0);
   while (!WITHIN(temp, HEATER_0_MINTEMP, HEATER_0_MAXTEMP)) {
     faultDuration++;
     if (faultDuration >= AC_HEATER_FAULT_VALIDATION_TIME) {
@@ -417,35 +416,20 @@ void ChironTFT::CheckHeaters() {
     SERIAL_ECHOLNPGM("Select SD file then press resume");
   }
 
-  void ChironTFT::SendtoTFT(PGM_P str) {  // A helper to print PROGMEM string to the panel
-    #if ACDEBUG(AC_SOME)
-      SERIAL_ECHOPGM_P(str);
-    #endif
-    while (const char c = pgm_read_byte(str++)) TFTSer.write(c);
-  }
-
-  void ChironTFT::SendtoTFTLN(PGM_P str = nullptr) {
-    if (str) {
-      #if ACDEBUG(AC_SOME)
-        SERIAL_ECHOPGM("> ");
-      #endif
-      SendtoTFT(str);
-      #if ACDEBUG(AC_SOME)
-        SERIAL_EOL();
-      #endif
+  // Update panel with hotend heater status
+  if (hotend_state != AC_heater_temp_reached) {
+    if (WITHIN(getActualTemp_celsius(E0) - getTargetTemp_celsius(E0), -(TEMP_WINDOW), TEMP_WINDOW)) {
+      SendtoTFTLN(AC_msg_nozzle_heating_done);
+      hotend_state = AC_heater_temp_reached;
     }
     TFTSer.println();
   }
 
-  bool ChironTFT::ReadTFTCommand() {
-    bool command_ready = false;
-    while (TFTSer.available() > 0 && command_len < MAX_CMND_LEN) {
-      panel_command[command_len] = TFTSer.read();
-      if (panel_command[command_len] == '\n') {
-        command_ready = true;
-        break;
-      }
-      command_len++;
+  // Update panel with bed heater status
+  if (hotbed_state != AC_heater_temp_reached) {
+    if (WITHIN(getActualTemp_celsius(BED) - getTargetTemp_celsius(BED), -(TEMP_BED_WINDOW), TEMP_BED_WINDOW)) {
+      SendtoTFTLN(AC_msg_bed_heating_done);
+      hotbed_state = AC_heater_temp_reached;
     }
 
     if (command_ready) {
@@ -743,7 +727,7 @@ void ChironTFT::PanelAction(uint8_t req) {
 
       if (!isPrinting()) { // Ignore request if printing
         char MoveCmnd[30];
-        sprintf_P(MoveCmnd, PSTR("G91\nG0 %s \nG90"), panel_command+3);
+        sprintf_P(MoveCmnd, PSTR("G91\nG0%s\nG90"), panel_command + 3);
         #if ACDEBUG(AC_ACTION)
           SERIAL_ECHOLNPAIR("Move: ", MoveCmnd);
         #endif
