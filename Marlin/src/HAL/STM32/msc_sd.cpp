@@ -30,6 +30,18 @@
 
 class Sd2CardUSBMscHandler : public USBMscHandler {
 public:
+  DiskIODriver* diskIODriver() {
+    #if ENABLED(MULTI_VOLUME)
+      #if SHARED_VOLUME_IS(SD_ONBOARD)
+        return &card.media_sd_spi;
+      #elif SHARED_VOLUME_IS(USB_FLASH_DRIVE)
+        return &card.media_usbFlashDrive;
+      #endif
+    #else
+      return card.diskIODriver();
+    #endif
+  }
+
   bool GetCapacity(uint32_t *pBlockNum, uint16_t *pBlockSize) {
     *pBlockNum = card.getSd2Card().cardSize();
     *pBlockSize = BLOCK_SIZE;
