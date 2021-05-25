@@ -952,9 +952,10 @@ void fast_line_to_current(const AxisEnum fr_axis) { _line_to_current(fr_axis, 0.
       #if ENABLED(TOOLCHANGE_PARK)
         if (ok) {
           #if ENABLED(TOOLCHANGE_NO_RETURN)
-            do_blocking_move_to_z(destination.z, planner.settings.max_feedrate_mm_s[Z_AXIS]);
+            destination.set(current_position.x, current_position.y);
+            prepare_internal_move_to_destination(planner.settings.max_feedrate_mm_s[Z_AXIS]);
           #else
-            do_blocking_move_to(destination, MMM_TO_MMS(TOOLCHANGE_PARK_XY_FEEDRATE));
+            prepare_internal_move_to_destination(MMM_TO_MMS(TOOLCHANGE_PARK_XY_FEEDRATE));
           #endif
         }
       #endif
@@ -962,9 +963,9 @@ void fast_line_to_current(const AxisEnum fr_axis) { _line_to_current(fr_axis, 0.
       // Cutting recover
       unscaled_e_move(toolchange_settings.extra_resume + TOOLCHANGE_FS_WIPE_RETRACT, MMM_TO_MMS(toolchange_settings.unretract_speed));
 
-      planner.synchronize();
+      // Resume at the old E position
       current_position.e = destination.e;
-      sync_plan_position_e(); // Resume at the old E position
+      sync_plan_position_e();
     }
   }
 

@@ -615,8 +615,9 @@ void resume_print(const_float_t slow_load_length/*=0*/, const_float_t fast_load_
     destination.set(resume_position.x, resume_position.y, current_position.z, current_position.e);
     prepare_internal_move_to_destination(NOZZLE_PARK_XY_FEEDRATE);
 
-    // Move Z_AXIS to saved position
-    do_blocking_move_to_z(resume_position.z, feedRate_t(NOZZLE_PARK_Z_FEEDRATE));
+    // Move Z back to saved position
+    destination.z = resume_position.z;
+    prepare_internal_move_to_destination(NOZZLE_PARK_Z_FEEDRATE);
   }
 
   // Unretract

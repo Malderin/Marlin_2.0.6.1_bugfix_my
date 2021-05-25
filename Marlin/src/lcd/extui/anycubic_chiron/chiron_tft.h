@@ -84,6 +84,6 @@ class ChironTFT {
     static bool GetLastError();
 };
 
-  extern ChironTFT Chiron;
+extern ChironTFT Chiron;
 
 } // Anycubic namespace

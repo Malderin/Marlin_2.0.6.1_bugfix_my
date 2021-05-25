@@ -258,34 +258,42 @@ void ChironTFT::StatusChange(const char * const msg)  {
       }
     } break;
 
-    // Filament runout is handled by Marlin settings in Configuration.h
-    // opt_set    FIL_RUNOUT_STATE HIGH  // Pin state indicating that filament is NOT present.
-    // opt_enable FIL_RUNOUT_PULLUP
+    case AC_printer_printing: {
+      if (strcmp_P(msg, MARLIN_msg_reheating) == 0) {
+        SendtoTFTLN(AC_msg_paused); // enable continue button
+        msg_matched = true;
+       }
+    } break;
 
-    TFTSer.begin(115200);
+    case AC_printer_pausing: {
+      if (strcmp_P(msg, MARLIN_msg_print_paused) == 0) {
+        SendtoTFTLN(AC_msg_paused);
+        printer_state = AC_printer_paused;
+        pause_state = AC_paused_idle;
+        msg_matched = true;
+       }
+    } break;
 
-    // Signal Board has reset
-    SendtoTFTLN(AC_msg_main_board_has_reset);
-
-    safe_delay(200);
-
-    // Enable leveling and Disable end stops during print
-    // as Z home places nozzle above the bed so we need to allow it past the end stops
-    injectCommands_P(AC_cmnd_enable_leveling);
-
-    // Startup tunes are defined in Tunes.h
-    //PlayTune(BEEPER_PIN, Anycubic_PowerOn, 1);
-    PlayTune(BEEPER_PIN, GB_PowerOn, 1);
-    #if ACDEBUGLEVEL
-      SERIAL_ECHOLNPAIR("AC Debug Level ", ACDEBUGLEVEL);
-    #endif
-    SendtoTFTLN(AC_msg_ready);
+    case AC_printer_stopping: {
+      if (strcmp_P(msg, MARLIN_msg_print_aborted) == 0) {
+        SendtoTFTLN(AC_msg_stop);
+        printer_state = AC_printer_idle;
+        msg_matched = true;
+      }
+    } break;
+    default:
+    break;
   }
 
-  void ChironTFT::IdleLoop()  {
-    if (ReadTFTCommand()) {
-      ProcessPanelRequest();
-      command_len = 0;
+  // If not matched earlier see if this was a heater message
+  if (!msg_matched) {
+    if (strcmp_P(msg, MARLIN_msg_extruder_heating) == 0) {
+      SendtoTFTLN(AC_msg_nozzle_heating);
+      hotend_state = AC_heater_temp_set;
+    }
+    else if (strcmp_P(msg, MARLIN_msg_bed_heating) == 0) {
+      SendtoTFTLN(AC_msg_bed_heating);
+      hotbed_state = AC_heater_temp_set;
     }
     else if (strcmp_P(msg, MARLIN_msg_EEPROM_version) == 0) {
       last_error = AC_error_EEPROM;
@@ -323,24 +331,18 @@ void ChironTFT::SendtoTFTLN(PGM_P str = nullptr) {
       SERIAL_EOL();
     #endif
   }
+  TFTSer.println();
+}
 
-  void ChironTFT::MediaEvent(media_event_t event)  {
-    #if ACDEBUG(AC_MARLIN)
-      SERIAL_ECHOLNPAIR("ProcessMediaStatus() ", event);
-    #endif
-    switch (event) {
-      case AC_media_inserted:
-        SendtoTFTLN(AC_msg_sd_card_inserted);
-      break;
-
-      case AC_media_removed:
-        SendtoTFTLN(AC_msg_sd_card_removed);
-      break;
-
-      case AC_media_error:
-        SendtoTFTLN(AC_msg_no_sd_card);
+bool ChironTFT::ReadTFTCommand() {
+  bool command_ready = false;
+  while (TFTSer.available() > 0 && command_len < MAX_CMND_LEN) {
+    panel_command[command_len] = TFTSer.read();
+    if (panel_command[command_len] == '\n') {
+      command_ready = true;
       break;
     }
+    command_len++;
   }
 
   if (command_ready || command_len == MAX_CMND_LEN) {
@@ -382,6 +384,8 @@ void ChironTFT::CheckHeaters() {
       SERIAL_ECHOLNPAIR("Extruder temp abnormal! : ", temp);
       break;
     }
+    delay_ms(500);
+    temp = getActualTemp_celsius(E0);
   }
 
   // If the hotbed temp is abnormal, confirm state before signaling panel
@@ -395,25 +399,8 @@ void ChironTFT::CheckHeaters() {
       SERIAL_ECHOLNPAIR("Bed temp abnormal! : ", temp);
       break;
     }
-
-    // If not matched earlier see if this was a heater message
-    if (!msg_matched) {
-      if (strcmp_P(msg, MARLIN_msg_extruder_heating) == 0) {
-        SendtoTFTLN(AC_msg_nozzle_heating);
-        hotend_state = AC_heater_temp_set;
-      }
-      else if (strcmp_P(msg, MARLIN_msg_bed_heating) == 0) {
-        SendtoTFTLN(AC_msg_bed_heating);
-        hotbed_state = AC_heater_temp_set;
-      }
-    }
-  }
-
-  void ChironTFT::PowerLossRecovery()  {
-    printer_state = AC_printer_resuming_from_power_outage; // Play tune to notify user we can recover.
-    PlayTune(BEEPER_PIN, SOS, 1);
-    SERIAL_ECHOLNPGM("Resuming from power outage...");
-    SERIAL_ECHOLNPGM("Select SD file then press resume");
+    delay_ms(500);
+    temp = getActualTemp_celsius(E0);
   }
 
   // Update panel with hotend heater status
@@ -422,7 +409,6 @@ void ChironTFT::CheckHeaters() {
       SendtoTFTLN(AC_msg_nozzle_heating_done);
       hotend_state = AC_heater_temp_reached;
     }
-    TFTSer.println();
   }
 
   // Update panel with bed heater status
@@ -431,22 +417,6 @@ void ChironTFT::CheckHeaters() {
       SendtoTFTLN(AC_msg_bed_heating_done);
       hotbed_state = AC_heater_temp_reached;
     }
-
-    if (command_ready) {
-      panel_command[command_len] = 0x00;
-      #if ACDEBUG(AC_ALL)
-        SERIAL_ECHOLNPAIR("< ", panel_command);
-      #endif
-      #if ACDEBUG(AC_SOME)
-        // Ignore status request commands
-        uint8_t req = atoi(&panel_command[1]);
-        if (req > 7 && req != 20) {
-          SERIAL_ECHOLNPAIR("> ", panel_command);
-          SERIAL_ECHOLNPAIR("printer_state:", printer_state);
-        }
-      #endif
-    }
-    return command_ready;
   }
 }
 
@@ -491,6 +461,7 @@ void ChironTFT::SelectFile() {
       SendFileList( 0 );
       break;
   }
+}
 
 void ChironTFT::ProcessPanelRequest() {
   // Break these up into logical blocks // as its easier to navigate than one huge switch case!
@@ -536,58 +507,71 @@ void ChironTFT::ProcessPanelRequest() {
   }
 }
 
-  void ChironTFT::SelectFile() {
-    strncpy(selectedfile, panel_command + 4, command_len - 4);
-    selectedfile[command_len - 5] = '\0';
-    #if ACDEBUG(AC_FILE)
-      SERIAL_ECHOLNPAIR_F(" Selected File: ",selectedfile);
-    #endif
-    switch (selectedfile[0]) {
-      case '/':   // Valid file selected
-        SendtoTFTLN(AC_msg_sd_file_open_success);
-        break;
+void ChironTFT::PanelInfo(uint8_t req) {
+  // information requests A0-A8 and A33
+  switch (req) {
+    case 0:   // A0 Get HOTEND Temp
+      SendtoTFT(PSTR("A0V "));
+      TFTSer.println(getActualTemp_celsius(E0));
+      break;
 
-      case '<':   // .. (go up folder level)
-        filenavigator.upDIR();
-        SendtoTFTLN(AC_msg_sd_file_open_failed);
-        SendFileList( 0 );
-        break;
-      default:   // enter sub folder
-        filenavigator.changeDIR(selectedfile);
-        SendtoTFTLN(AC_msg_sd_file_open_failed);
-        SendFileList( 0 );
-        break;
-    }
-  }
+    case 1:   // A1 Get HOTEND Target Temp
+      SendtoTFT(PSTR("A1V "));
+      TFTSer.println(getTargetTemp_celsius(E0));
+      break;
 
-  void ChironTFT::InjectCommandandWait(PGM_P cmd) {
-    //injectCommands_P(cmnd); queue.enqueue_now_P(cmd);
-    //SERIAL_ECHOLN(PSTR("Inject>"));
-  }
+    case 2:   // A2 Get BED Temp
+      SendtoTFT(PSTR("A2V "));
+      TFTSer.println(getActualTemp_celsius(BED));
+      break;
 
-  void ChironTFT::ProcessPanelRequest() {
-    // Break these up into logical blocks // as its easier to navigate than one huge switch case!
-    int8_t req = atoi(&panel_command[1]);
+    case 3:   // A3 Get BED Target Temp
+      SendtoTFT(PSTR("A3V "));
+      TFTSer.println(getTargetTemp_celsius(BED));
+      break;
 
-    // Information requests A0 - A8 and A33
-    if (req <= 8 || req == 33) PanelInfo(req);
+    case 4:   // A4 Get FAN Speed
+      SendtoTFT(PSTR("A4V "));
+      TFTSer.println(getActualFan_percent(FAN0));
+      break;
 
-    // Simple Actions A9 - A28
-    else if ( req <= 28) PanelAction(req);
+    case 5:   // A5 Get Current Coordinates
+      SendtoTFT(PSTR("A5V X: "));
+      TFTSer.print(getAxisPosition_mm(X));
+      SendtoTFT(PSTR(" Y: "));
+      TFTSer.print(getAxisPosition_mm(Y));
+      SendtoTFT(PSTR(" Z: "));
+      TFTSer.println(getAxisPosition_mm(Z));
+      break;
 
-    // Process Initiation
-    else if (req <= 34) PanelProcess(req);
+    case 6:   // A6 Get printing progress
+      if (isPrintingFromMedia()) {
+        SendtoTFT(PSTR("A6V "));
+        TFTSer.println(ui8tostr2(getProgress_percent()));
+      }
+      else
+        SendtoTFTLN(PSTR("A6V ---"));
+      break;
 
-    else SendtoTFTLN();
-  }
+    case 7: { // A7 Get Printing Time
+      uint32_t time = getProgress_seconds_elapsed() / 60;
+      SendtoTFT(PSTR("A7V "));
+      TFTSer.print(ui8tostr2(time / 60));
+      SendtoTFT(PSTR(" H "));
+      TFTSer.print(ui8tostr2(time % 60));
+      SendtoTFT(PSTR(" M"));
+      #if ACDEBUG(AC_ALL)
+        SERIAL_ECHOLNPAIR("Print time ", ui8tostr2(time / 60), ":", ui8tostr2(time % 60));
+      #endif
+    } break;
 
-  void ChironTFT::PanelInfo(uint8_t req) {
-    // information requests A0-A8 and A33
-    switch (req) {
-      case 0:   // A0 Get HOTEND Temp
-        SendtoTFT(PSTR("A0V "));
-        TFTSer.println(getActualTemp_celsius(E0));
-        break;
+    case 8:   // A8 Get SD Card list A8 S0
+      if (!isMediaInserted()) safe_delay(500);
+      if (!isMediaInserted())   // Make sure the card is removed
+        SendtoTFTLN(AC_msg_no_sd_card);
+      else if (panel_command[3] == 'S')
+        SendFileList( atoi( &panel_command[4] ) );
+      break;
 
     case 33:   // A33 Get firmware info
       SendtoTFT(PSTR("J33 "));
@@ -609,29 +593,33 @@ void ChironTFT::PanelAction(uint8_t req) {
         SendtoTFTLN(AC_msg_stop);
       break;
 
-      case 2:   // A2 Get BED Temp
-        SendtoTFT(PSTR("A2V "));
-        TFTSer.println(getActualTemp_celsius(BED));
-        break;
+    case 10: // A10 Resume SD Print
+      if (pause_state == AC_paused_idle || printer_state == AC_printer_resuming_from_power_outage)
+        resumePrint();
+      else
+        setUserConfirmed();
+      break;
 
-      case 3:   // A3 Get BED Target Temp
-        SendtoTFT(PSTR("A3V "));
-        TFTSer.println(getTargetTemp_celsius(BED));
-        break;
+    case 11:   // A11 Stop SD print
+      if (isPrintingFromMedia()) {
+        printer_state = AC_printer_stopping;
+        stopPrint();
+      }
+      else {
+        if (printer_state == AC_printer_resuming_from_power_outage)
+          injectCommands_P(PSTR("M1000 C")); // Cancel recovery
+        SendtoTFTLN(AC_msg_stop);
+        printer_state = AC_printer_idle;
+      }
+      break;
 
-      case 4:   // A4 Get FAN Speed
-        SendtoTFT(PSTR("A4V "));
-        TFTSer.println(getActualFan_percent(FAN0));
-        break;
+    case 12:   // A12 Kill printer
+      kill();  // from marlincore.h
+      break;
 
-      case 5:   // A5 Get Current Coordinates
-        SendtoTFT(PSTR("A5V X: "));
-        TFTSer.print(getAxisPosition_mm(X));
-        SendtoTFT(PSTR(" Y: "));
-        TFTSer.print(getAxisPosition_mm(Y));
-        SendtoTFT(PSTR(" Z: "));
-        TFTSer.println(getAxisPosition_mm(Z));
-        break;
+    case 13:   // A13 Select file
+      SelectFile();
+      break;
 
     case 14: { // A14 Start Printing
       // Allows printer to restart the job if we dont want to recover
@@ -654,68 +642,53 @@ void ChironTFT::PanelAction(uint8_t req) {
       }
       break;
 
-      case 7: { // A7 Get Printing Time
-        uint32_t time = getProgress_seconds_elapsed() / 60;
-        SendtoTFT(PSTR("A7V "));
-        TFTSer.print(ui8tostr2(time / 60));
-        SendtoTFT(PSTR(" H "));
-        TFTSer.print(ui8tostr2(time % 60));
-        SendtoTFT(PSTR(" M"));
-        #if ACDEBUG(AC_ALL)
-          SERIAL_ECHOLNPAIR("Print time ", ui8tostr2(time / 60), ":", ui8tostr2(time % 60));
-        #endif
-      } break;
+    case 16: { // A16 Set HotEnd temp  A17 S170
+      const float set_Htemp = atof(&panel_command[5]);
+      hotend_state = set_Htemp ? AC_heater_temp_set : AC_heater_off;
+      switch ((char)panel_command[4]) {
+        // Set Temp
+        case 'S': case 'C': setTargetTemp_celsius(set_Htemp, E0);
+      }
+    } break;
 
-      case 8:   // A8 Get SD Card list A8 S0
-        if (!isMediaInserted()) safe_delay(500);
-        if (!isMediaInserted())   // Make sure the card is removed
-          SendtoTFTLN(AC_msg_no_sd_card);
-        else if (panel_command[3] == 'S')
-          SendFileList( atoi( &panel_command[4] ) );
-        break;
+    case 17: { // A17 Set bed temp
+      const float set_Btemp = atof(&panel_command[5]);
+      hotbed_state = set_Btemp ? AC_heater_temp_set : AC_heater_off;
+      if (panel_command[4] == 'S')
+        setTargetTemp_celsius(set_Btemp, BED);
+    } break;
 
-      case 33:   // A33 Get firmware info
-        SendtoTFT(PSTR("J33 "));
-        SendtoTFTLN(PSTR(SHORT_BUILD_VERSION));
-        break;
-    }
-  }
+    case 18:   // A18 Set Fan Speed
+      if (panel_command[4] == 'S')
+        setTargetFan_percent(atof(&panel_command[5]), FAN0);
+      break;
 
-  void ChironTFT::PanelAction(uint8_t req) {
-    switch (req) {
-      case  9:   // A9 Pause SD print
-        if (isPrintingFromMedia()) {
-          SendtoTFTLN(AC_msg_pause);
-          pausePrint();
-          printer_state = AC_printer_pausing;
+    case 19:   // A19 Motors off
+      if (!isPrinting()) {
+        disable_all_steppers(); // from marlincore.h
+        SendtoTFTLN(AC_msg_ready);
+      }
+      break;
+
+    case 20:   // A20 Read/write print speed
+      if (panel_command[4] == 'S')
+        setFeedrate_percent(atoi(&panel_command[5]));
+      else {
+        SendtoTFT(PSTR("A20V "));
+        TFTSer.println(getFeedrate_percent());
+      }
+      break;
+
+    case 21:   // A21 Home Axis  A21 X
+      if (!isPrinting()) {
+        switch ((char)panel_command[4]) {
+          case 'X': injectCommands_P(PSTR("G28X")); break;
+          case 'Y': injectCommands_P(PSTR("G28Y")); break;
+          case 'Z': injectCommands_P(PSTR("G28Z")); break;
+          case 'C': injectCommands_P(G28_STR); break;
         }
-        else
-          SendtoTFTLN(AC_msg_stop);
-        break;
-
-      case 10: // A10 Resume SD Print
-        if (pause_state == AC_paused_idle || printer_state == AC_printer_resuming_from_power_outage)
-          resumePrint();
-        else
-          setUserConfirmed();
-        break;
-
-      case 11:   // A11 Stop SD print
-        if (isPrintingFromMedia()) {
-          printer_state = AC_printer_stopping;
-          stopPrint();
-        }
-        else {
-          if (printer_state == AC_printer_resuming_from_power_outage)
-            injectCommands_P(PSTR("M1000 C")); // Cancel recovery
-          SendtoTFTLN(AC_msg_stop);
-          printer_state = AC_printer_idle;
-        }
-        break;
-
-      case 12:   // A12 Kill printer
-        kill();  // from marlincore.h
-        break;
+      }
+      break;
 
     case 22: {   // A22 Move Axis
       // The commands have changed on the new panel
@@ -736,32 +709,39 @@ void ChironTFT::PanelAction(uint8_t req) {
       }
     } break;
 
-      case 19:   // A19 Motors off
-        if (!isPrinting()) {
-          disable_all_steppers(); // from marlincore.h
-          SendtoTFTLN(AC_msg_ready);
-        }
-        break;
+    case 23:   // A23 Preheat PLA
+      // Ignore request if printing
+      if (!isPrinting()) {
+        // Temps defined in configuration.h
+        setTargetTemp_celsius(PREHEAT_1_TEMP_BED, BED);
+        setTargetTemp_celsius(PREHEAT_1_TEMP_HOTEND, E0);
+        SendtoTFTLN();
+        hotbed_state = AC_heater_temp_set;
+        hotend_state = AC_heater_temp_set;
+      }
+      break;
 
-      case 20:   // A20 Read/write print speed
-        if (panel_command[4] == 'S')
-          setFeedrate_percent(atoi(&panel_command[5]));
-        else {
-          SendtoTFT(PSTR("A20V "));
-          TFTSer.println(getFeedrate_percent());
-        }
-        break;
+    case 24:   // A24 Preheat ABS
+      // Ignore request if printing
+      if (!isPrinting()) {
+        setTargetTemp_celsius(PREHEAT_2_TEMP_BED, BED);
+        setTargetTemp_celsius(PREHEAT_2_TEMP_HOTEND, E0);
+        SendtoTFTLN();
+        hotbed_state = AC_heater_temp_set;
+        hotend_state = AC_heater_temp_set;
+      }
+      break;
 
-      case 21:   // A21 Home Axis  A21 X
-        if (!isPrinting()) {
-          switch ((char)panel_command[4]) {
-            case 'X': injectCommands_P(PSTR("G28X")); break;
-            case 'Y': injectCommands_P(PSTR("G28Y")); break;
-            case 'Z': injectCommands_P(PSTR("G28Z")); break;
-            case 'C': injectCommands_P(G28_STR); break;
-          }
-        }
-        break;
+    case 25:   // A25 Cool Down
+      // Ignore request if printing
+      if (!isPrinting()) {
+        setTargetTemp_celsius(0, E0);
+        setTargetTemp_celsius(0, BED);
+        SendtoTFTLN(AC_msg_ready);
+        hotbed_state = AC_heater_off;
+        hotend_state = AC_heater_off;
+      }
+      break;
 
     case 26:   // A26 Refresh SD
       if (card.isMounted())card.release();
@@ -770,17 +750,8 @@ void ChironTFT::PanelAction(uint8_t req) {
       filenavigator.reset();
       break;
 
-      case 23:   // A23 Preheat PLA
-        // Ignore request if printing
-        if (!isPrinting()) {
-          // Temps defined in configuration.h
-          setTargetTemp_celsius(PREHEAT_1_TEMP_BED, BED);
-          setTargetTemp_celsius(PREHEAT_1_TEMP_HOTEND, E0);
-          SendtoTFTLN();
-          hotbed_state = AC_heater_temp_set;
-          hotend_state = AC_heater_temp_set;
-        }
-        break;
+    case 27:   // A27 Servo Angles adjust
+      break;
 
     case 28:   // A28 Filament set A28 O/C
       // Ignore request if printing
@@ -823,7 +794,10 @@ void ChironTFT::PanelProcess(uint8_t req) {
             #endif
           }
         }
-        break;
+        selectedmeshpoint.x = pos.x;
+        selectedmeshpoint.y = pos.y;
+      }
+    } break;
 
     case 30: {   // A30 Auto leveling
       if (FindToken('S') != -1) { // Start probing New panel adds spaces..
@@ -888,29 +862,20 @@ void ChironTFT::PanelProcess(uint8_t req) {
             #endif
             if (isAxisPositionKnown(Z)) {
               #if ACDEBUG(AC_INFO)
-                SERIAL_ECHOLNPAIR("Moving to mesh point at x: ", pos.x, " y: ", pos.y, " z: ", pos_z);
+                const float currZpos = getAxisPosition_mm(Z);
+                SERIAL_ECHOLNPAIR("Nudge Z pos from ", currZpos, " to ", currZpos + constrain(Zshift, -0.05, 0.05));
               #endif
-              // Go up before moving
-              setAxisPosition_mm(3.0,Z);
-
-              setAxisPosition_mm(17 + (93 * pos.x), X);
-              setAxisPosition_mm(20 + (93 * pos.y), Y);
-              setAxisPosition_mm(0.0, Z);
+              // Use babystepping to adjust the head position
+              int16_t steps = mmToWholeSteps(constrain(Zshift,-0.05,0.05), Z);
               #if ACDEBUG(AC_INFO)
-                SERIAL_ECHOLNPAIR("Current Z: ", getAxisPosition_mm(Z));
+                SERIAL_ECHOLNPAIR("Steps to move Z: ", steps);
               #endif
+              babystepAxis_steps(steps, Z);
+              live_Zoffset += Zshift;
             }
+            SendtoTFT(PSTR("A31V "));
+            TFTSer.println(live_Zoffset);
           }
-          selectedmeshpoint.x = pos.x;
-          selectedmeshpoint.y = pos.y;
-        }
-      } break;
-
-      case 30: {  // A30 Auto leveling
-        if (panel_command[3] == 'S') { // Start probing
-          // Ignore request if printing
-          if (isPrinting())
-            SendtoTFTLN(AC_msg_probing_not_allowed); // forbid auto leveling
           else {
             GRID_LOOP(x, y) {
               const xy_uint8_t pos { x, y };
@@ -920,117 +885,66 @@ void ChironTFT::PanelProcess(uint8_t req) {
                 SERIAL_ECHOLNPAIR("Change mesh point X", x," Y",y ," from ", currval, " to ", getMeshPoint(pos) );
               #endif
             }
-          break;
-          case 'D':   // Save Z Offset tables and restore leveling state
-            if (!isPrinting()) {
-              setAxisPosition_mm(1.0,Z);
-              injectCommands_P(PSTR("M500"));
-              selectedmeshpoint.x = selectedmeshpoint.y = 99;
-            }
-          break;
-          case 'G':   // Get current offset
+            const float currZOffset = getZOffset_mm();
+            #if ACDEBUG(AC_INFO)
+              SERIAL_ECHOLNPAIR("Change probe offset from ", currZOffset, " to  ", currZOffset + Zshift);
+            #endif
+
+            setZOffset_mm(currZOffset + Zshift);
             SendtoTFT(PSTR("A31V "));
-            // When printing use the live z Offset position
-            // we will use babystepping to move the print head
-            if (isPrinting())
-              TFTSer.println(live_Zoffset);
-            else {
-              TFTSer.println(getZOffset_mm());
-              selectedmeshpoint.x = selectedmeshpoint.y = 99;
-            }
-          break;
-          case 'S': { // Set offset (adjusts all points by value)
-            float Zshift = atof(&panel_command[4]);
-            setSoftEndstopState(false);  // disable endstops
-            // Allow temporary Z position nudging during print
-            // From the leveling panel use the all points UI to adjust the print pos.
-            if (isPrinting()) {
+            TFTSer.println(getZOffset_mm());
+
+            if (isAxisPositionKnown(Z)) {
+              // Move Z axis
+              const float currZpos = getAxisPosition_mm(Z);
               #if ACDEBUG(AC_INFO)
-                SERIAL_ECHOLNPAIR("Change Zoffset from:", live_Zoffset, " to ", live_Zoffset + Zshift);
+                SERIAL_ECHOLNPAIR("Move Z pos from ", currZpos, " to ", currZpos + constrain(Zshift, -0.05, 0.05));
               #endif
-              if (isAxisPositionKnown(Z)) {
-                #if ACDEBUG(AC_INFO)
-                  const float currZpos = getAxisPosition_mm(Z);
-                  SERIAL_ECHOLNPAIR("Nudge Z pos from ", currZpos, " to ", currZpos + constrain(Zshift, -0.05, 0.05));
-                #endif
-                // Use babystepping to adjust the head position
-                int16_t steps = mmToWholeSteps(constrain(Zshift,-0.05,0.05), Z);
-                #if ACDEBUG(AC_INFO)
-                  SERIAL_ECHOLNPAIR("Steps to move Z: ", steps);
-                #endif
-                babystepAxis_steps(steps, Z);
-                live_Zoffset += Zshift;
-              }
-              SendtoTFT(PSTR("A31V "));
-              TFTSer.println(live_Zoffset);
+              setAxisPosition_mm(currZpos+constrain(Zshift,-0.05,0.05),Z);
             }
-            else {
-              GRID_LOOP(x, y) {
-                const xy_uint8_t pos { x, y };
-                const float currval = getMeshPoint(pos);
-                setMeshPoint(pos, constrain(currval + Zshift, AC_LOWEST_MESHPOINT_VAL, 2));
-              }
-              const float currZOffset = getZOffset_mm();
-              #if ACDEBUG(AC_INFO)
-                SERIAL_ECHOLNPAIR("Change probe offset from ", currZOffset, " to  ", currZOffset + Zshift);
-              #endif
-
-              setZOffset_mm(currZOffset + Zshift);
-              SendtoTFT(PSTR("A31V "));
-              TFTSer.println(getZOffset_mm());
-
-              if (isAxisPositionKnown(Z)) {
-                // Move Z axis
-                const float currZpos = getAxisPosition_mm(Z);
-                #if ACDEBUG(AC_INFO)
-                  SERIAL_ECHOLNPAIR("Move Z pos from ", currZpos, " to ", currZpos + constrain(Zshift, -0.05, 0.05));
-                #endif
-                setAxisPosition_mm(currZpos+constrain(Zshift,-0.05,0.05),Z);
-              }
-            }
-          } break;
-        } // end switch
-      } break;
-
-      case 32: { // A32 clean leveling beep flag
-        // Ignore request if printing
-        //if (isPrinting()) break;
-        //injectCommands_P(PSTR("M500\nM420 S1\nG1 Z10 F240\nG1 X0 Y0 F6000"));
-        //TFTSer.println();
-      } break;
-
-      // A33 firmware info request seet PanelInfo()
-
-      case 34: {  // A34 Adjust single mesh point A34 C/S X1 Y1 V123
-        if (panel_command[3] == 'C') { // Restore original offsets
-          injectCommands_P(PSTR("M501\nM420 S1"));
-          selectedmeshpoint.x = selectedmeshpoint.y = 99;
-          //printer_state = AC_printer_idle;
+          }
         }
-        else {
-          xy_uint8_t pos;
-          pos.x = atoi(&panel_command[5]);
-          pos.y = atoi(&panel_command[8]);
+      }
+    } break;
 
-          float currmesh = getMeshPoint(pos);
-          float newval   = atof(&panel_command[11])/100;
-          #if ACDEBUG(AC_INFO)
-            SERIAL_ECHOLNPAIR("Change mesh point x:", pos.x, " y:", pos.y);
-            SERIAL_ECHOLNPAIR("from ", currmesh, " to ", newval);
-          #endif
-          // Update Meshpoint
-          setMeshPoint(pos,newval);
-          if (printer_state == AC_printer_idle || printer_state == AC_printer_probing /*!isPrinting()*/) {
-            // if we are at the current mesh point indicated on the panel Move Z pos +/- 0.05mm
-            // (The panel changes the mesh value by +/- 0.05mm on each button press)
-            if (selectedmeshpoint.x == pos.x && selectedmeshpoint.y == pos.y) {
-              setSoftEndstopState(false);
-              float currZpos = getAxisPosition_mm(Z);
-              #if ACDEBUG(AC_INFO)
-                SERIAL_ECHOLNPAIR("Move Z pos from ", currZpos, " to ", currZpos + constrain(newval - currmesh, -0.05, 0.05));
-              #endif
-              setAxisPosition_mm(currZpos + constrain(newval - currmesh, -0.05, 0.05), Z);
-            }
+    case 32: { // A32 clean leveling beep flag
+      // Ignore request if printing
+      //if (isPrinting()) break;
+      //injectCommands_P(PSTR("M500\nM420 S1\nG1 Z10 F240\nG1 X0 Y0 F6000"));
+      //TFTSer.println();
+    } break;
+
+    // A33 firmware info request see PanelInfo()
+
+    case 34: {  // A34 Adjust single mesh point A34 C/S X1 Y1 V123
+      if (panel_command[3] == 'C') { // Restore original offsets
+        injectCommands_P(PSTR("M501\nM420 S1"));
+        selectedmeshpoint.x = selectedmeshpoint.y = 99;
+        //printer_state = AC_printer_idle;
+      }
+      else {
+        xy_uint8_t pos;
+        pos.x = atoi(&panel_command[5]);
+        pos.y = atoi(&panel_command[8]);
+
+        float currmesh = getMeshPoint(pos);
+        float newval   = atof(&panel_command[11])/100;
+        #if ACDEBUG(AC_INFO)
+          SERIAL_ECHOLNPAIR("Change mesh point x:", pos.x, " y:", pos.y);
+          SERIAL_ECHOLNPAIR("from ", currmesh, " to ", newval);
+        #endif
+        // Update Meshpoint
+        setMeshPoint(pos,newval);
+        if (printer_state == AC_printer_idle || printer_state == AC_printer_probing /*!isPrinting()*/) {
+          // if we are at the current mesh point indicated on the panel Move Z pos +/- 0.05mm
+          // (The panel changes the mesh value by +/- 0.05mm on each button press)
+          if (selectedmeshpoint.x == pos.x && selectedmeshpoint.y == pos.y) {
+            setSoftEndstopState(false);
+            float currZpos = getAxisPosition_mm(Z);
+            #if ACDEBUG(AC_INFO)
+              SERIAL_ECHOLNPAIR("Move Z pos from ", currZpos, " to ", currZpos + constrain(newval - currmesh, -0.05, 0.05));
+            #endif
+            setAxisPosition_mm(currZpos + constrain(newval - currmesh, -0.05, 0.05), Z);
           }
         }
       }

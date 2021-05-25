@@ -101,13 +101,19 @@ bool BaseMoveAxisScreen::onTouchHeld(uint8_t tag) {
     case 20: SpinnerDialogBox::enqueueAndWait_P(F("G28X")); break;
     case 21: SpinnerDialogBox::enqueueAndWait_P(F("G28Y")); break;
     case 22: SpinnerDialogBox::enqueueAndWait_P(F("G28Z")); break;
-    case 23: SpinnerDialogBox::enqueueAndWait_P(F("G28"));   break;
+    case 23: SpinnerDialogBox::enqueueAndWait_P(F("G28")); break;
+    case 24: raiseZtoTop(); break;
     default:
       return false;
   }
   #undef UI_DECREMENT_AXIS
   #undef UI_INCREMENT_AXIS
   return true;
+}
+
+void BaseMoveAxisScreen::raiseZtoTop() {
+  constexpr xyze_feedrate_t homing_feedrate = HOMING_FEEDRATE_MM_M;
+  setAxisPosition_mm(Z_MAX_POS - 5, Z, homing_feedrate[Z_AXIS]);
 }
 
 float BaseMoveAxisScreen::getManualFeedrate(uint8_t axis, float increment_mm) {

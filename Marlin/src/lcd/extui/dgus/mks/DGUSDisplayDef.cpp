@@ -100,7 +100,6 @@ void MKS_resume_print_move() {
   prepare_internal_move_to_destination(park_speed_z);
   TERN_(POWER_LOSS_RECOVERY, if (recovery.enabled) recovery.save(true));
 }
-void MKS_resume_print_move() { do_blocking_move_to(position_before_pause); }
 
 float z_offset_add = 0;
 

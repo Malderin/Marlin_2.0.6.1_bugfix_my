@@ -121,8 +121,7 @@ void GcodeSuite::M701() {
   #endif
 
   // Restore Z axis
-  if (park_point.z > 0)
-    do_blocking_move_to_z(_MAX(current_position.z - park_point.z, 0), feedRate_t(NOZZLE_PARK_Z_FEEDRATE));
+  move_z_by(-park_raise);
 
   #if HAS_MULTI_EXTRUDER && (HAS_PRUSA_MMU1 || !HAS_MMU)
     // Restore toolhead if it was changed
