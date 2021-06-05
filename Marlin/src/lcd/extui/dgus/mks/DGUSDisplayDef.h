@@ -59,19 +59,19 @@ extern xyz_int_t tmc_step;
 
 extern uint16_t lcd_default_light;
 
-#if X_HAS_STEALTHCHOP
+#if AXIS_HAS_STEALTHCHOP(X)
   extern uint16_t tmc_x_current;
 #endif
-#if Y_HAS_STEALTHCHOP
+#if AXIS_HAS_STEALTHCHOP(Y)
   extern uint16_t tmc_y_current;
 #endif
-#if Z_HAS_STEALTHCHOP
+#if AXIS_HAS_STEALTHCHOP(Z)
   extern uint16_t tmc_z_current;
 #endif
-#if E0_HAS_STEALTHCHOP
+#if AXIS_HAS_STEALTHCHOP(E0)
   extern uint16_t tmc_e0_current;
 #endif
-#if E1_HAS_STEALTHCHOP
+#if AXIS_HAS_STEALTHCHOP(E1)
   extern uint16_t tmc_e1_current;
 #endif
 

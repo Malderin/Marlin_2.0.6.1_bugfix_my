@@ -59,7 +59,6 @@
 
 // extern
 
-PGMSTR(M21_STR, "M21");
 PGMSTR(M23_STR, "M23 %s");
 PGMSTR(M24_STR, "M24");
 

@@ -60,32 +60,32 @@ void EndstopStatesScreen::onRedraw(draw_mode_t) {
   )
   .text(BTN_POS(1,1), BTN_SIZE(6,1), GET_TEXT_F(MSG_LCD_ENDSTOPS))
   .font(font_tiny);
-  #if HAS_X_MAX
+  #if PIN_EXISTS(X_MAX)
     PIN_ENABLED (1, 2, PSTR(STR_X_MAX), X_MAX, X_MAX_ENDSTOP_INVERTING)
   #else
     PIN_DISABLED(1, 2, PSTR(STR_X_MAX), X_MAX)
   #endif
-  #if HAS_Y_MAX
+  #if PIN_EXISTS(Y_MAX)
     PIN_ENABLED (3, 2, PSTR(STR_Y_MAX), Y_MAX, Y_MAX_ENDSTOP_INVERTING)
   #else
     PIN_DISABLED(3, 2, PSTR(STR_Y_MAX), Y_MAX)
   #endif
-  #if HAS_Z_MAX
+  #if PIN_EXISTS(Z_MAX)
     PIN_ENABLED (5, 2, PSTR(STR_Z_MAX), Z_MAX, Z_MAX_ENDSTOP_INVERTING)
   #else
     PIN_DISABLED(5, 2, PSTR(STR_Z_MAX), Z_MAX)
   #endif
-  #if HAS_X_MIN
+  #if PIN_EXISTS(X_MIN)
     PIN_ENABLED (1, 3, PSTR(STR_X_MIN), X_MIN, X_MIN_ENDSTOP_INVERTING)
   #else
     PIN_DISABLED(1, 3, PSTR(STR_X_MIN), X_MIN)
   #endif
-  #if HAS_Y_MIN
+  #if PIN_EXISTS(Y_MIN)
     PIN_ENABLED (3, 3, PSTR(STR_Y_MIN), Y_MIN, Y_MIN_ENDSTOP_INVERTING)
   #else
     PIN_DISABLED(3, 3, PSTR(STR_Y_MIN), Y_MIN)
   #endif
-  #if HAS_Z_MIN
+  #if PIN_EXISTS(Z_MIN)
     PIN_ENABLED (5, 3, PSTR(STR_Z_MIN), Z_MIN, Z_MIN_ENDSTOP_INVERTING)
   #else
     PIN_DISABLED(5, 3, PSTR(STR_Z_MIN), Z_MIN)
