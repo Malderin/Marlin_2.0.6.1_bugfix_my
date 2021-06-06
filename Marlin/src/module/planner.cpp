@@ -1445,7 +1445,7 @@ void Planner::check_axes_activity() {
     float high = 0.0;
     for (uint8_t b = block_buffer_tail; b != block_buffer_head; b = next_block_index(b)) {
       block_t *block = &block_buffer[b];
-      if (block->steps.x || block->steps.y || block->steps.z) {
+      if (LINEAR_AXIS_GANG(block->steps.x, || block->steps.y, || block->steps.z, || block->steps.i, || block->steps.j, || block->steps.k)) {
         const float se = (float)block->steps.e / block->step_event_count * SQRT(block->nominal_speed_sqr); // mm/sec;
         NOLESS(high, se);
       }
@@ -2802,10 +2802,13 @@ bool Planner::buffer_segment(
   // Calculate target position in absolute steps
   const abce_long_t target = {
      LOGICAL_AXIS_LIST(
-      int32_t(LROUND(e * settings.axis_steps_per_mm[E_AXIS_N(extruder)])),
-      int32_t(LROUND(a * settings.axis_steps_per_mm[A_AXIS])),
-      int32_t(LROUND(b * settings.axis_steps_per_mm[B_AXIS])),
-      int32_t(LROUND(c * settings.axis_steps_per_mm[C_AXIS]))
+      int32_t(LROUND(abce.e * settings.axis_steps_per_mm[E_AXIS_N(extruder)])),
+      int32_t(LROUND(abce.a * settings.axis_steps_per_mm[A_AXIS])),
+      int32_t(LROUND(abce.b * settings.axis_steps_per_mm[B_AXIS])),
+      int32_t(LROUND(abce.c * settings.axis_steps_per_mm[C_AXIS])),
+      int32_t(LROUND(abce.i * settings.axis_steps_per_mm[I_AXIS])),
+      int32_t(LROUND(abce.j * settings.axis_steps_per_mm[J_AXIS])),
+      int32_t(LROUND(abce.k * settings.axis_steps_per_mm[K_AXIS]))
     )
   };
 
@@ -2829,9 +2832,35 @@ bool Planner::buffer_segment(
       SERIAL_ECHOPAIR("->", target.a);
       SERIAL_ECHOPAIR(") B:", b);
     #else
-      SERIAL_ECHOPAIR_P(SP_X_LBL, a);
-      SERIAL_ECHOPAIR(" (", position.x);
-      SERIAL_ECHOPAIR("->", target.x);
+      SERIAL_ECHOPAIR_P(SP_X_LBL, abce.a);
+      SERIAL_ECHOPAIR(" (", position.x, "->", target.x);
+      SERIAL_CHAR(')');
+      SERIAL_ECHOPAIR_P(SP_Y_LBL, abce.b);
+    #endif
+    SERIAL_ECHOPAIR(" (", position.y, "->", target.y);
+    #if LINEAR_AXES >= ABC
+      #if ENABLED(DELTA)
+        SERIAL_ECHOPAIR(") C:", abce.c);
+      #else
+        SERIAL_CHAR(')');
+        SERIAL_ECHOPAIR_P(SP_Z_LBL, abce.c);
+      #endif
+      SERIAL_ECHOPAIR(" (", position.z, "->", target.z);
+      SERIAL_CHAR(')');
+    #endif
+    #if LINEAR_AXES >= 4
+      SERIAL_ECHOPAIR_P(SP_I_LBL, abce.i);
+      SERIAL_ECHOPAIR(" (", position.i, "->", target.i);
+      SERIAL_CHAR(')');
+    #endif
+    #if LINEAR_AXES >= 5
+      SERIAL_ECHOPAIR_P(SP_J_LBL, abce.j);
+      SERIAL_ECHOPAIR(" (", position.j, "->", target.j);
+      SERIAL_CHAR(')');
+    #endif
+    #if LINEAR_AXES >= 6
+      SERIAL_ECHOPAIR_P(SP_K_LBL, abce.k);
+      SERIAL_ECHOPAIR(" (", position.k, "->", target.k);
       SERIAL_CHAR(')');
       SERIAL_ECHOPAIR_P(SP_Y_LBL, b);
     #endif
