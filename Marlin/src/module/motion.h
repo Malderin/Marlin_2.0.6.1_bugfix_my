@@ -168,36 +168,13 @@ inline float home_bump_mm(const AxisEnum axis) {
             TERN_(MIN_SOFTWARE_ENDSTOP_X, amin = min.x);
             TERN_(MAX_SOFTWARE_ENDSTOP_X, amax = max.x);
             break;
-          #if HAS_Y_AXIS
-            case Y_AXIS:
-              TERN_(MIN_SOFTWARE_ENDSTOP_Y, amin = min.y);
-              TERN_(MAX_SOFTWARE_ENDSTOP_Y, amax = max.y);
-              break;
-          #endif
-          #if HAS_Z_AXIS
-            case Z_AXIS:
-              TERN_(MIN_SOFTWARE_ENDSTOP_Z, amin = min.z);
-              TERN_(MAX_SOFTWARE_ENDSTOP_Z, amax = max.z);
-              break;
-          #endif
-          #if LINEAR_AXES >= 4
-            case I_AXIS:
-              TERN_(MIN_SOFTWARE_ENDSTOP_I, amin = min.i);
-              TERN_(MIN_SOFTWARE_ENDSTOP_I, amax = max.i);
-              break;
-          #endif
-          #if LINEAR_AXES >= 5
-            case J_AXIS:
-              TERN_(MIN_SOFTWARE_ENDSTOP_J, amin = min.j);
-              TERN_(MIN_SOFTWARE_ENDSTOP_J, amax = max.j);
-              break;
-          #endif
-          #if LINEAR_AXES >= 6
-            case K_AXIS:
-              TERN_(MIN_SOFTWARE_ENDSTOP_K, amin = min.k);
-              TERN_(MIN_SOFTWARE_ENDSTOP_K, amax = max.k);
-              break;
-          #endif
+          case Y_AXIS:
+            TERN_(MIN_SOFTWARE_ENDSTOP_Y, amin = min.y);
+            TERN_(MAX_SOFTWARE_ENDSTOP_Y, amax = max.y);
+            break;
+          case Z_AXIS:
+            TERN_(MIN_SOFTWARE_ENDSTOP_Z, amin = min.z);
+            TERN_(MAX_SOFTWARE_ENDSTOP_Z, amax = max.z);
           default: break;
         }
       #endif
