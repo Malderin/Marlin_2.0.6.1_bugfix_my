@@ -532,3 +532,4 @@ void GcodeSuite::G28() {
     }
   #endif
   TERN_(HAS_LEVELING, set_bed_leveling_enabled(true));
+}
