@@ -47,10 +47,10 @@ static lv_obj_t *scr;
 static lv_obj_t *labelExt1, *labelFan, *labelZpos, *labelTime;
 static lv_obj_t *labelPause, *labelStop, *labelOperat;
 static lv_obj_t *bar1, *bar1ValueText;
-static lv_obj_t *buttonPause, *buttonOperat, *buttonStop, *buttonExt1, *buttonExt2, *buttonBedstate, *buttonFanstate, *buttonZpos;
+static lv_obj_t *buttonPause, *buttonOperat, *buttonStop, *buttonExt1, *buttonBedstate, *buttonFanstate, *buttonZpos;
 
 #if ENABLED(HAS_MULTI_EXTRUDER)
-  static lv_obj_t *labelExt2;
+  static lv_obj_t *labelExt2, *buttonExt2;
 #endif
 
 #if HAS_HEATED_BED
@@ -139,8 +139,6 @@ void lv_draw_printing() {
   scr = lv_screen_create(PRINTING_UI);
 
   // Create image buttons
-  buttonExt1 = lv_imgbtn_create(scr, "F:/bmp_ext1_state.bin", 206, 136, event_handler, ID_TEMP_EXT);
-
   #if HAS_MULTI_EXTRUDER
     buttonExt2 = lv_imgbtn_create(scr, "F:/bmp_ext2_state.bin", 350, 136, event_handler, ID_TEMP_EXT);
   #endif
@@ -149,6 +147,7 @@ void lv_draw_printing() {
     buttonBedstate = lv_imgbtn_create(scr, "F:/bmp_bed_state.bin", 206, 186, event_handler, ID_TEMP_BED);
   #endif
 
+  buttonExt1 = lv_imgbtn_create(scr, "F:/bmp_ext1_state.bin", 206, 136, event_handler, ID_TEMP_EXT);
   buttonFanstate = lv_imgbtn_create(scr, "F:/bmp_fan_state.bin", 350, 186, event_handler, ID_FAN);
 
   lv_obj_t *buttonTime = lv_img_create(scr, nullptr);
@@ -236,7 +235,8 @@ void disp_bed_temp() {
 }
 
 void disp_fan_speed() {
-  sprintf_P(public_buf_l, PSTR("%d%%"), (int)thermalManager.fanSpeedPercent(0));
+  sprintf_P(public_buf_l, PSTR("%d%%"), (int)thermalManager.pwmToPercent(thermalManager.fan_speed[0]));
+
   lv_label_set_text(labelFan, public_buf_l);
 }
 

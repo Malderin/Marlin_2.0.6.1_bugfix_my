@@ -45,7 +45,7 @@ enum {
 
 static void event_handler(lv_obj_t *obj, lv_event_t event) {
   if (event != LV_EVENT_RELEASED) return;
-  uint8_t fanPercent = map(thermalManager.fan_speed[0], 0, 255, 0, 100);
+  uint8_t fanPercent = (int)thermalManager.pwmToPercent(thermalManager.fan_speed[0]);
   switch (obj->mks_obj_id) {
     case ID_F_ADD: if (fanPercent < 100) fanPercent++; break;
     case ID_F_DEC: if (fanPercent !=  0) fanPercent--; break;
@@ -77,7 +77,7 @@ void lv_draw_fan() {
 
 void disp_fan_value() {
   #if HAS_FAN
-    sprintf_P(public_buf_l, PSTR("%s: %3d%%"), fan_menu.state, (int)map(thermalManager.fan_speed[0], 0, 255, 0, 100));
+    sprintf_P(public_buf_l, PSTR("%s: %3d%%"), fan_menu.state, (int)thermalManager.pwmToPercent(thermalManager.fan_speed[0]));
   #else
     sprintf_P(public_buf_l, PSTR("%s: ---"), fan_menu.state);
   #endif
