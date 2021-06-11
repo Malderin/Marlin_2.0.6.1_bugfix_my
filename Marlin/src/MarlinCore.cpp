@@ -282,15 +282,8 @@ bool wait_for_heatup = true;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnarrowing"
 
-#ifdef RUNTIME_ONLY_ANALOG_TO_DIGITAL
-  static const pin_t sensitive_pins[] PROGMEM = { SENSITIVE_PINS };
-#else
-  template <pin_t ...D>
-  constexpr pin_t OnlyPins<-2, D...>::table[sizeof...(D)];
-  #define sensitive_pins OnlyPins<SENSITIVE_PINS>::table
-#endif
-
 bool pin_is_protected(const pin_t pin) {
+  static const pin_t sensitive_pins[] PROGMEM = SENSITIVE_PINS;
   LOOP_L_N(i, COUNT(sensitive_pins)) {
     pin_t sensitive_pin;
     memcpy_P(&sensitive_pin, &sensitive_pins[i], sizeof(pin_t));
@@ -1143,6 +1136,13 @@ void setup() {
     #else
       #error "DISABLE_(DEBUG|JTAG) is not supported for the selected MCU/Board."
     #endif
+  #endif
+
+  #if BOTH(HAS_TFT_LVGL_UI, MKS_WIFI_MODULE)
+    mks_esp_wifi_init();
+    WIFISERIAL.begin(WIFI_BAUDRATE);
+    serial_connect_timeout = millis() + 1000UL;
+    while (/*!WIFISERIAL && */PENDING(millis(), serial_connect_timeout)) { /*nada*/ }
   #endif
 
   TERN_(DYNAMIC_VECTORTABLE, hook_cpu_exceptions()); // If supported, install Marlin exception handlers at runtime
