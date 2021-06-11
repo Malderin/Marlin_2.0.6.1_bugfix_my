@@ -21,7 +21,9 @@
  */
 #pragma once
 
-#include "env_validate.h"
+#if NOT_TARGET(__STM32F1__, STM32F1)
+  #error "Oops! Select an STM32F1 board in 'Tools > Board.'"
+#endif
 
 // Release PB3/PB4 (E0 STP/DIR) from JTAG pins
 #define DISABLE_JTAG
