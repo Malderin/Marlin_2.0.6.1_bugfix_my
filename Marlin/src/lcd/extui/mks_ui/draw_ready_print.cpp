@@ -197,6 +197,7 @@ void lv_draw_ready_print() {
     #if HAS_HEATED_BED
       buttonBedstate = lv_big_button_create(scr, "F:/bmp_bed_state.bin", " ", TERN(HAS_MULTI_HOTEND, 271, 210), ICON_POS_Y, event_handler, ID_INFO_BED);
     #endif
+    buttonFanstate = lv_big_button_create(scr, "F:/bmp_fan_state.bin", " ", 380, ICON_POS_Y, event_handler, ID_INFO_FAN);
 
     TERN_(HAS_HOTEND, labelExt1 = lv_label_create_empty(scr));
     TERN_(HAS_MULTI_HOTEND, labelExt2 = lv_label_create_empty(scr));
@@ -236,9 +237,6 @@ void lv_temp_refr() {
     lv_label_set_text(labelFan, public_buf_l);
     lv_obj_align(labelFan, buttonFanstate, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
   #endif
-  sprintf_P(public_buf_l, PSTR("%d%%"), (int)thermalManager.fanSpeedPercent(0));
-  lv_label_set_text(labelFan, public_buf_l);
-  lv_obj_align(labelFan, buttonFanstate, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
 }
 
 void lv_clear_ready_print() {
