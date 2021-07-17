@@ -28,9 +28,9 @@
 #include "pic_manager.h"
 #include "draw_ready_print.h"
 
-#if ENABLED(MKS_TEST)
+//#if ENABLED(MKS_TEST)
   #include "mks_hardware_test.h"
-#endif
+//#endif
 
 #include "SPIFlashStorage.h"
 #include "../../../libs/W25Qxx.h"

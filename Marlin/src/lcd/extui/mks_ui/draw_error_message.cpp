@@ -31,9 +31,9 @@
 #include "SPI_TFT.h"
 #include "../../../inc/MarlinConfig.h"
 
-#if ENABLED(MKS_TEST)
+//#if ENABLED(MKS_TEST)
   #include "mks_hardware_test.h"
-#endif
+//#endif
 
 static lv_obj_t *scr;
 

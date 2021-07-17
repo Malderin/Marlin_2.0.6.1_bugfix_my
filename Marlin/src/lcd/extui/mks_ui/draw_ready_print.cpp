@@ -39,9 +39,9 @@
   #include "draw_touch_calibration.h"
 #endif
 
-#if ENABLED(MKS_TEST)
+//#if ENABLED(MKS_TEST)
   #include "mks_hardware_test.h"
-#endif
+//#endif
 
 #include <stdio.h>
 
