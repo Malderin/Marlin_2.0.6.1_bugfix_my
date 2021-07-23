@@ -600,16 +600,12 @@ class Temperature {
 
       static inline uint8_t scaledFanSpeed(const uint8_t fan, const uint8_t fs) {
         UNUSED(fan); // Potentially unused!
-        return (fs * uint16_t(TERN(ADAPTIVE_FAN_SLOWING, fan_speed_scaler[fan], 128))) >> 7;
+        return TERN(ADAPTIVE_FAN_SLOWING, (uint16_t(fs) * fan_speed_scaler[fan]) >> 7, fs);
       }
-
-      static inline uint8_t scaledFanSpeed(const uint8_t fan) {
-        return scaledFanSpeed(fan, fan_speed[fan]);
-      }
-
-      static constexpr inline uint8_t pwmToPercent(const uint8_t speed) { return ui8_to_percent(speed); }
-      static inline uint8_t fanSpeedPercent(const uint8_t fan)          { return ui8_to_percent(fan_speed[fan]); }
-      static inline uint8_t scaledFanSpeedPercent(const uint8_t fan)    { return ui8_to_percent(scaledFanSpeed(fan)); }
+      static inline bool fanSpeedIsScaled(const uint8_t fan)            { return TERN0(ADAPTIVE_FAN_SLOWING, fan_speed_scaler[fan] < 128); }
+      static inline uint8_t scaledFanSpeed(const uint8_t fan)           { return scaledFanSpeed(fan, fan_speed[fan]); }
+      static inline uint8_t fanSpeedPercent(const uint8_t fan)          { return pwm_to_percent(fan_speed[fan]); }
+      static inline uint8_t scaledFanSpeedPercent(const uint8_t fan)    { return pwm_to_percent(scaledFanSpeed(fan)); }
 
       #if ENABLED(EXTRA_FAN_SPEED)
         typedef struct { uint8_t saved, speed; } extra_fan_t;
