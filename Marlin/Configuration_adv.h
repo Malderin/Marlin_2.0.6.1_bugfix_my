@@ -3724,23 +3724,24 @@
   //#define CUSTOM_MENU_MAIN_SCRIPT_RETURN   // Return to status screen after a script
   #define CUSTOM_MENU_MAIN_ONLY_IDLE         // Only show custom menu when the machine is idle
 
-  #define MAIN_MENU_ITEM_1_DESC "стол PETG"
+  #define MAIN_MENU_ITEM_1_DESC "Cтол PETG"
   #define MAIN_MENU_ITEM_1_GCODE "M140 S" STRINGIFY(PREHEAT_2_TEMP_BED)
   //#define MAIN_MENU_ITEM_1_CONFIRM          // Show a confirmation dialog before this action
 
-  #define MAIN_MENU_ITEM_2_DESC "преднагрев\n для " PREHEAT_1_LABEL
+  //#define MAIN_MENU_ITEM_2_DESC "преднагрев\n для " PREHEAT_1_LABEL
+  #define MAIN_MENU_ITEM_2_DESC PREHEAT_1_LABEL
   #define MAIN_MENU_ITEM_2_GCODE "M140 S" STRINGIFY(PREHEAT_1_TEMP_BED) "\nM104 S" STRINGIFY(PREHEAT_1_TEMP_HOTEND)
   //#define MAIN_MENU_ITEM_2_CONFIRM
 
-  #define MAIN_MENU_ITEM_3_DESC "преднагрев\n для " PREHEAT_2_LABEL
+  #define MAIN_MENU_ITEM_3_DESC PREHEAT_2_LABEL
   #define MAIN_MENU_ITEM_3_GCODE "M140 S" STRINGIFY(PREHEAT_2_TEMP_BED) "\nM104 S" STRINGIFY(PREHEAT_2_TEMP_HOTEND)
   //#define MAIN_MENU_ITEM_3_CONFIRM
 
-  #define MAIN_MENU_ITEM_4_DESC "охлаждение"
+  #define MAIN_MENU_ITEM_4_DESC "Oхлаждение"
   #define MAIN_MENU_ITEM_4_GCODE "M108\nM106 255"
   //#define MAIN_MENU_ITEM_4_CONFIRM
 
-  #define MAIN_MENU_ITEM_5_DESC "оси X30 Y60"
+  #define MAIN_MENU_ITEM_5_DESC "Oси X30 Y60"
   #define MAIN_MENU_ITEM_5_GCODE "G28 X0 Y0\nG1 X32 Y62.1 F4000\nM84"
   //#define MAIN_MENU_ITEM_5_CONFIRM
 #endif
