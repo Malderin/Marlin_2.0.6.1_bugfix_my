@@ -3744,6 +3744,10 @@
   #define MAIN_MENU_ITEM_5_DESC "Oси X30 Y60"
   #define MAIN_MENU_ITEM_5_GCODE "G28 X0 Y0\nG1 X32 Y62.1 F4000\nM84"
   //#define MAIN_MENU_ITEM_5_CONFIRM
+
+  #define MAIN_MENU_ITEM_6_DESC "Z +30"
+  #define MAIN_MENU_ITEM_6_GCODE "G1 Z30 F600\nM84"
+  //#define MAIN_MENU_ITEM_6_CONFIRM
 #endif
 
 // Custom Menu: Configuration Menu
