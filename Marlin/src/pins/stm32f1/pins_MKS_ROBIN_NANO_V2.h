@@ -211,13 +211,10 @@
 // Misc. Functions
 //
 #if HAS_TFT_LVGL_UI
-  #define MT_DET_1_PIN                      PA4
-  #define MT_DET_2_PIN                      PE6
-  #define MT_DET_PIN_STATE                  LOW
-
   #define MT_DET_1_PIN                      PA4   // LVGL UI FILAMENT RUNOUT1 PIN
-  //#define MT_DET_2_PIN                      PE6   // LVGL UI FILAMENT RUNOUT2 PIN
-  #define MT_DET_PIN_INVERTING              true  // LVGL UI filament RUNOUT PIN STATE
+//  #define MT_DET_2_PIN                      PE6   // LVGL UI FILAMENT RUNOUT2 PIN
+  #define MT_DET_PIN_STATE                  HIGH
+//  #define MT_DET_PIN_INVERTING              true  // LVGL UI filament RUNOUT PIN STATE ??
   #define FIL_RUNOUT_PIN                    PA4 //Malderin
   #define WIFI_IO0_PIN                      PC13  // MKS ESP WIFI IO0 PIN
   #define WIFI_IO1_PIN                      PC7   // MKS ESP WIFI IO1 PIN
