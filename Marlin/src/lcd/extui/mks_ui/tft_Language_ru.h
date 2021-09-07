@@ -196,6 +196,7 @@
 #define TITLE_MOVE_RU                       "движение"
 #define TITLE_HOME_RU                       "Home"
 #define TITLE_EXTRUDE_RU                    "экструзия"
+#define TITLE_MLEVELING_RU                  "углы"
 #define TITLE_LEVELING_RU                   "уровень"
 #define TITLE_SET_RU                        "настройки"
 #define TITLE_MORE_RU                       "больше"
