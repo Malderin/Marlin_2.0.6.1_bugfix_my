@@ -1388,10 +1388,10 @@
 
 // Travel limits (mm) after homing, corresponding to endstop positions.
 #define X_MIN_POS 0
-#define Y_MIN_POS 2
+#define Y_MIN_POS 3
 #define Z_MIN_POS 0
 #define X_MAX_POS X_BED_SIZE
-#define Y_MAX_POS 182
+#define Y_MAX_POS 183
 #define Z_MAX_POS 180
 //#define I_MIN_POS 0
 //#define I_MAX_POS 50
@@ -2804,7 +2804,7 @@
   #define BUTTON_DELAY_EDIT  50 // (ms) Button repeat delay for edit screens
   #define BUTTON_DELAY_MENU 250 // (ms) Button repeat delay for menus
 
-  //#define TOUCH_IDLE_SLEEP 300 // (secs) Turn off the TFT backlight if set (5mn)
+  #define TOUCH_IDLE_SLEEP 300 // (secs) Turn off the TFT backlight if set (5mn)
 
   #define TOUCH_SCREEN_CALIBRATION
 
@@ -2813,6 +2813,14 @@
   //#define TOUCH_OFFSET_X        -43
   //#define TOUCH_OFFSET_Y        257
   //#define TOUCH_ORIENTATION TOUCH_LANDSCAPE
+
+  //Malderin
+  #if ENABLED(TFT_LVGL_UI)
+    #define TOUCH_CALIBRATION_X -17253
+    #define TOUCH_CALIBRATION_Y  11579
+    #define TOUCH_OFFSET_X       514
+    #define TOUCH_OFFSET_Y       -24
+  #endif
 
   #if BOTH(TOUCH_SCREEN_CALIBRATION, EEPROM_SETTINGS)
     #define TOUCH_CALIBRATION_AUTO_SAVE // Auto save successful calibration values to EEPROM
@@ -2975,11 +2983,3 @@
 
 // Disable servo with M282 to reduce power consumption, noise, and heat when not in use
 //#define SERVO_DETACH_GCODE
-
-//Malderin
-#if ENABLED(TFT_LVGL_UI)
-  #define TOUCH_CALIBRATION_X -17253
-  #define TOUCH_CALIBRATION_Y  11579
-  #define TOUCH_OFFSET_X       514
-  #define TOUCH_OFFSET_Y       -24
-#endif
