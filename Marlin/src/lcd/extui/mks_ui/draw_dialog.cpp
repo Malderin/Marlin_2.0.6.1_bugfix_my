@@ -319,6 +319,11 @@ void lv_draw_dialog(uint8_t type) {
     lv_obj_align(labelDialog, nullptr, LV_ALIGN_CENTER, 0, -20);
   }
   else if (DIALOG_IS(TYPE_FINISH_PRINT)) {
+//    strcat(public_buf_l, print_file_dialog_menu.print_time);
+//    strcat(public_buf_l, PRINT_TIME);
+//    lv_label_set_text(tempText1, public_buf_l);
+//    lv_obj_align(tempText1, nullptr, LV_ALIGN_CENTER, 0, -15);
+
     lv_label_set_text(labelDialog, print_file_dialog_menu.print_finish);
     lv_obj_align(labelDialog, nullptr, LV_ALIGN_CENTER, 0, -20);
   }
