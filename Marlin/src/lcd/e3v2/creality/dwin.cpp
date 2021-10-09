@@ -138,7 +138,7 @@ constexpr uint16_t MROWS = TROWS - 1,   // Last Row Index
 
 // Value Init
 HMI_value_t HMI_ValueStruct;
-HMI_Flag_t HMI_flag{0};
+HMI_flag_t HMI_flag{0};
 
 millis_t dwin_heat_time = 0;
 
@@ -359,12 +359,8 @@ inline void Clear_Title_Bar() {
   DWIN_Draw_Box(1, Color_Bg_Blue, 0, 0, DWIN_WIDTH, TITLE_HEIGHT);
 }
 
-void Draw_Title(const char * const title) {
-  DWIN_Draw_String(false, DWIN_FONT_HEAD, Color_White, Color_Bg_Blue, 14, 4, (char*)title);
-}
-
-void Draw_Title(const __FlashStringHelper * title) {
-  DWIN_Draw_String(false, DWIN_FONT_HEAD, Color_White, Color_Bg_Blue, 14, 4, (char*)title);
+void Draw_Title(FSTR_P ftitle) {
+  DWIN_Draw_String(false, DWIN_FONT_HEAD, Color_White, Color_Bg_Blue, 14, 4, ftitle);
 }
 
 inline void Clear_Menu_Area() {
@@ -420,18 +416,25 @@ inline uint16_t nr_sd_menu_items() {
   return card.get_num_Files() + !card.flag.workDirIsRoot;
 }
 
-void Draw_Menu_Icon(const uint8_t line, const uint8_t icon) {
-  DWIN_ICON_Show(ICON, icon, 26, MBASE(line) - 3);
-}
-
 void Erase_Menu_Text(const uint8_t line) {
   DWIN_Draw_Rectangle(1, Color_Bg_Black, LBLX, MBASE(line) - 14, 271, MBASE(line) + 28);
 }
 
-void Draw_Menu_Item(const uint8_t line, const uint8_t icon=0, const char * const label=nullptr, bool more=false) {
-  if (label) DWIN_Draw_String(false, font8x16, Color_White, Color_Bg_Black, LBLX, MBASE(line) - 1, (char*)label);
+void Draw_Menu_Icon(const uint8_t line, const uint8_t icon) {
+  DWIN_ICON_Show(ICON, icon, 26, MBASE(line) - 3);
+}
+
+void _Decorate_Menu_Item(const uint8_t line, const uint8_t icon, bool more) {
   if (icon) Draw_Menu_Icon(line, icon);
   if (more) Draw_More_Icon(line);
+}
+void Draw_Menu_Item(const uint8_t line, const uint8_t icon=0, const char * const label=nullptr, bool more=false) {
+  if (label) DWIN_Draw_String(false, font8x16, Color_White, Color_Bg_Black, LBLX, MBASE(line) - 1, (char*)label);
+  _Decorate_Menu_Item(line, icon, more);
+}
+void Draw_Menu_Item(const uint8_t line, const uint8_t icon=0, FSTR_P const flabel=nullptr, bool more=false) {
+  if (flabel) DWIN_Draw_String(false, font8x16, Color_White, Color_Bg_Black, LBLX, MBASE(line) - 1, flabel);
+  _Decorate_Menu_Item(line, icon, more);
 }
 
 void Draw_Menu_Line(const uint8_t line, const uint8_t icon=0, const char * const label=nullptr, bool more=false) {
@@ -439,13 +442,14 @@ void Draw_Menu_Line(const uint8_t line, const uint8_t icon=0, const char * const
   DWIN_Draw_Line(Line_Color, 16, MBASE(line) + 33, 256, MBASE(line) + 34);
 }
 
-void Draw_Menu_LineF(const uint8_t line, const uint8_t icon=0, const __FlashStringHelper *label=nullptr, bool more=false) {
-  Draw_Menu_Line(line, icon, (char*)label, more);
+void Draw_Menu_Line(const uint8_t line, const uint8_t icon, FSTR_P const flabel, bool more=false) {
+  Draw_Menu_Item(line, icon, flabel, more);
+  DWIN_Draw_Line(Line_Color, 16, MBASE(line) + 33, 256, MBASE(line) + 34);
 }
 
 void Draw_Checkbox_Line(const uint8_t line, const bool ison) {
   const uint16_t x = 225, y = EBASE(line) - 2;
-  DWIN_Draw_String(true, font8x16, Color_White, Color_Bg_Black, x + 5, y, F(ison ? "X" : " "));
+  DWIN_Draw_String(true, font8x16, Color_White, Color_Bg_Black, x + 5, y, ison ? F("X") : F(" "));
   DWIN_Draw_Rectangle(0, Color_White, x + 2, y + 2, x + 16, y + 16);
 }
 
@@ -470,7 +474,7 @@ void Draw_Back_First(const bool is_sel=true) {
 }
 
 template <typename T>
-inline bool Apply_Encoder(const ENCODER_DiffState &encoder_diffState, T &valref) {
+inline bool Apply_Encoder(const EncoderState &encoder_diffState, T &valref) {
   if (encoder_diffState == ENCODER_DIFF_CW)
     valref += EncoderRate.encoderMoveValue;
   else if (encoder_diffState == ENCODER_DIFF_CCW)
@@ -589,11 +593,11 @@ void say_steps_per_mm_en(const uint8_t row) {
 void DWIN_Draw_Label(const uint8_t row, char *string) {
   DWIN_Draw_String(true, font8x16, Color_White, Color_Bg_Black, LBLX, MBASE(row), string);
 }
-void DWIN_Draw_Label(const uint8_t row, const __FlashStringHelper *title) {
+void DWIN_Draw_Label(const uint8_t row, FSTR_P title) {
   DWIN_Draw_Label(row, (char*)title);
 }
 
-void DWIN_Draw_Signed_Float(uint8_t size, uint16_t bColor, uint8_t iNum, uint8_t fNum, uint16_t x, uint16_t y, long value) {
+void DWIN_Draw_Signed_Float(uint8_t size, uint16_t bColor, uint8_t iNum, uint8_t fNum, uint16_t x, uint16_t y, int32_t value) {
   DWIN_Draw_String(true, size, Color_White, bColor, x - 8, y, value < 0 ? F("-") : F(" "));
   DWIN_Draw_FloatValue(true, true, 0, size, Color_White, bColor, iNum, fNum, x, y, value < 0 ? -value : value);
 }
@@ -607,7 +611,7 @@ void Draw_Edit_Integer4(const uint8_t row, const uint16_t value, const bool acti
 }
 
 void Draw_Edit_Float3(const uint8_t row, const uint16_t value, const bool active=false) {
-  DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, active ? Select_Color : Color_Bg_Black, 3, UNITFDIGITS, 220 - UNITFDIGITS * 8, EBASE(row), value);
+  DWIN_Draw_FloatValue(true, true, 0, font8x16, Color_White, active ? Select_Color : Color_Bg_Black, 3, UNITFDIGITS, 220 - UNITFDIGITS * 8, EBASE(row), (int32_t)value);
 }
 
 void Draw_Edit_Signed_Float2(const uint8_t row, const float value, const bool active=false) {
@@ -1292,11 +1296,11 @@ void Goto_MainMenu() {
   TERN(HAS_ONESTEP_LEVELING, ICON_Leveling, ICON_StartInfo)();
 }
 
-inline ENCODER_DiffState get_encoder_state() {
+inline EncoderState get_encoder_state() {
   static millis_t Encoder_ms = 0;
   const millis_t ms = millis();
   if (PENDING(ms, Encoder_ms)) return ENCODER_DIFF_NO;
-  const ENCODER_DiffState state = Encoder_ReceiveAnalyze();
+  const EncoderState state = Encoder_ReceiveAnalyze();
   if (state != ENCODER_DIFF_NO) Encoder_ms = ms + ENCODER_WAIT_MS;
   return state;
 }
@@ -1317,7 +1321,7 @@ void HMI_Move_Done(const AxisEnum axis) {
 }
 
 void HMI_Move_X() {
-  ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+  EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
   if (Apply_Encoder(encoder_diffState, HMI_ValueStruct.Move_X_scaled)) {
     Draw_Edit_Float3(1, HMI_ValueStruct.Move_X_scaled);
@@ -1331,7 +1335,7 @@ void HMI_Move_X() {
 }
 
 void HMI_Move_Y() {
-  ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+  EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
   if (Apply_Encoder(encoder_diffState, HMI_ValueStruct.Move_Y_scaled)) {
     Draw_Edit_Float3(2, HMI_ValueStruct.Move_Y_scaled);
@@ -1345,7 +1349,7 @@ void HMI_Move_Y() {
 }
 
 void HMI_Move_Z() {
-  ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+  EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
   if (Apply_Encoder(encoder_diffState, HMI_ValueStruct.Move_Z_scaled)) {
     Draw_Edit_Float3(3, HMI_ValueStruct.Move_Z_scaled);
@@ -1362,7 +1366,7 @@ void HMI_Move_Z() {
 
   void HMI_Move_E() {
     static float last_E_scaled = 0;
-    ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+    EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
     if (encoder_diffState == ENCODER_DIFF_NO) return;
     if (Apply_Encoder(encoder_diffState, HMI_ValueStruct.Move_E_scaled)) {
       last_E_scaled = HMI_ValueStruct.Move_E_scaled;
@@ -1383,7 +1387,7 @@ void HMI_Move_Z() {
   bool printer_busy() { return planner.movesplanned() || printingIsActive(); }
 
   void HMI_Zoffset() {
-    ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+    EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
     if (encoder_diffState == ENCODER_DIFF_NO) return;
     uint8_t zoff_line;
     switch (HMI_ValueStruct.show_mode) {
@@ -1416,7 +1420,7 @@ void HMI_Move_Z() {
 #if HAS_HOTEND
 
   void HMI_ETemp() {
-    ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+    EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
     if (encoder_diffState == ENCODER_DIFF_NO) return;
     uint8_t temp_line;
     switch (HMI_ValueStruct.show_mode) {
@@ -1458,7 +1462,7 @@ void HMI_Move_Z() {
 #if HAS_HEATED_BED
 
   void HMI_BedTemp() {
-    ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+    EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
     if (encoder_diffState == ENCODER_DIFF_NO) return;
     uint8_t bed_line;
     switch (HMI_ValueStruct.show_mode) {
@@ -1500,7 +1504,7 @@ void HMI_Move_Z() {
 #if HAS_PREHEAT && HAS_FAN
 
   void HMI_FanSpeed() {
-    ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+    EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
     if (encoder_diffState == ENCODER_DIFF_NO) return;
     uint8_t fan_line;
     switch (HMI_ValueStruct.show_mode) {
@@ -1541,7 +1545,7 @@ void HMI_Move_Z() {
 #endif // HAS_PREHEAT && HAS_FAN
 
 void HMI_PrintSpeed() {
-  ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+  EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
   if (Apply_Encoder(encoder_diffState, HMI_ValueStruct.print_speed)) {
     checkkey = Tune;
@@ -1559,7 +1563,7 @@ void HMI_PrintSpeed() {
 #define LAST_AXIS TERN(HAS_HOTEND, E_AXIS, Z_AXIS)
 
 void HMI_MaxFeedspeedXYZE() {
-  ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+  EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
   if (Apply_Encoder(encoder_diffState, HMI_ValueStruct.Max_Feedspeed)) {
     checkkey = MaxSpeed;
@@ -1578,7 +1582,7 @@ void HMI_MaxFeedspeedXYZE() {
 }
 
 void HMI_MaxAccelerationXYZE() {
-  ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+  EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
   if (Apply_Encoder(encoder_diffState, HMI_ValueStruct.Max_Acceleration)) {
     checkkey = MaxAcceleration;
@@ -1599,7 +1603,7 @@ void HMI_MaxAccelerationXYZE() {
 #if HAS_CLASSIC_JERK
 
   void HMI_MaxJerkXYZE() {
-    ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+    EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
     if (encoder_diffState == ENCODER_DIFF_NO) return;
     if (Apply_Encoder(encoder_diffState, HMI_ValueStruct.Max_Jerk_scaled)) {
       checkkey = MaxJerk;
@@ -1620,7 +1624,7 @@ void HMI_MaxAccelerationXYZE() {
 #endif // HAS_CLASSIC_JERK
 
 void HMI_StepXYZE() {
-  ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+  EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
   if (Apply_Encoder(encoder_diffState, HMI_ValueStruct.Max_Step_scaled)) {
     checkkey = Step;
@@ -1816,7 +1820,9 @@ void HMI_SDCardInit() { card.cdroot(); }
 
 void MarlinUI::refresh() { /* Nothing to see here */ }
 
-#define ICON_Folder ICON_More
+#if HAS_LCD_BRIGHTNESS
+  void MarlinUI::_set_brightness() { DWIN_LCD_Brightness(backlight ? brightness : 0); }
+#endif
 
 #if ENABLED(SCROLL_LONG_FILENAMES)
 
@@ -1851,7 +1857,7 @@ void Draw_SDItem(const uint16_t item, int16_t row=-1) {
   if (row < 0) row = item + 1 + MROWS - index_file;
   const bool is_subdir = !card.flag.workDirIsRoot;
   if (is_subdir && item == 0) {
-    Draw_Menu_Line(row, ICON_Folder, "..");
+    Draw_Menu_Line(row, ICON_Folder, F(".."));
     return;
   }
 
@@ -2077,7 +2083,7 @@ void Draw_Print_File_Menu() {
 
 // Main Process
 void HMI_MainMenu() {
-  ENCODER_DiffState encoder_diffState = get_encoder_state();
+  EncoderState encoder_diffState = get_encoder_state();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
 
   if (encoder_diffState == ENCODER_DIFF_CW) {
@@ -2137,7 +2143,7 @@ void HMI_MainMenu() {
 
 // Select (and Print) File
 void HMI_SelectFile() {
-  ENCODER_DiffState encoder_diffState = get_encoder_state();
+  EncoderState encoder_diffState = get_encoder_state();
 
   const uint16_t hasUpDir = !card.flag.workDirIsRoot;
 
@@ -2257,7 +2263,7 @@ void HMI_SelectFile() {
 
 // Printing
 void HMI_Printing() {
-  ENCODER_DiffState encoder_diffState = get_encoder_state();
+  EncoderState encoder_diffState = get_encoder_state();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
 
   if (HMI_flag.done_confirm_flag) {
@@ -2335,7 +2341,7 @@ void HMI_Printing() {
 
 // Pause and Stop window
 void HMI_PauseOrStop() {
-  ENCODER_DiffState encoder_diffState = get_encoder_state();
+  EncoderState encoder_diffState = get_encoder_state();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
 
   if (encoder_diffState == ENCODER_DIFF_CW)
@@ -2346,7 +2352,7 @@ void HMI_PauseOrStop() {
     if (select_print.now == PRINT_PAUSE_RESUME) {
       if (HMI_flag.select_flag) {
         HMI_flag.pause_action = true;
-        queue.inject_P(PSTR("M25"));
+        queue.inject(F("M25"));
       }
       Goto_PrintProcess();
     }
@@ -2417,7 +2423,7 @@ void Item_Adv_HomeOffsets(const uint8_t row) {
       Item_AreaCopy(1,  76, 102,  87, row); // "Set Home Offsets"
     #endif
   }
-  Draw_Menu_Line(row, ICON_HomeOff);
+  Draw_Menu_Line(row, ICON_HomeOffset);
   Draw_More_Icon(row);
 }
 
@@ -2434,7 +2440,7 @@ void Item_Adv_HomeOffsets(const uint8_t row) {
         say_probe_offs_en(row);
       #endif
     }
-    Draw_Menu_Line(row, ICON_ProbeOff);
+    Draw_Menu_Line(row, ICON_ProbeOffset);
     Draw_More_Icon(row);
   }
 
@@ -2529,12 +2535,12 @@ void Item_HomeOffs_X(const uint8_t row) {
   }
   else {
     #ifdef USE_STRING_TITLES
-      Draw_Menu_LineF(row, ICON_HomeOffX, GET_TEXT_F(MSG_HOME_OFFSET_X));
+      Draw_Menu_Line(row, ICON_HomeOffsetX, GET_TEXT_F(MSG_HOME_OFFSET_X));
     #else
       say_home_offs_en(row); say_x_en(75, row);   // "Home Offset X"
     #endif
   }
-  Draw_Menu_Line(row, ICON_HomeOff);
+  Draw_Menu_Line(row, ICON_HomeOffset);
   Draw_Edit_Signed_Float3(row, HMI_ValueStruct.Home_OffX_scaled);
 }
 
@@ -2544,12 +2550,12 @@ void Item_HomeOffs_Y(const uint8_t row) {
   }
   else {
     #ifdef USE_STRING_TITLES
-      Draw_Menu_LineF(row, ICON_HomeOffY, GET_TEXT_F(MSG_HOME_OFFSET_Y));
+      Draw_Menu_Line(row, ICON_HomeOffsetY, GET_TEXT_F(MSG_HOME_OFFSET_Y));
     #else
       say_home_offs_en(row); say_y_en(75, row);   // "Home Offset X"
     #endif
   }
-  Draw_Menu_Line(row, ICON_HomeOff);
+  Draw_Menu_Line(row, ICON_HomeOffset);
   Draw_Edit_Signed_Float3(row, HMI_ValueStruct.Home_OffY_scaled);
 }
 
@@ -2559,12 +2565,12 @@ void Item_HomeOffs_Z(const uint8_t row) {
   }
   else {
     #ifdef USE_STRING_TITLES
-      Draw_Menu_LineF(row, ICON_HomeOffZ, GET_TEXT_F(MSG_HOME_OFFSET_Z));
+      Draw_Menu_Line(row, ICON_HomeOffsetZ, GET_TEXT_F(MSG_HOME_OFFSET_Z));
     #else
       say_home_offs_en(row); say_z_en(75, row);   // "Home Offset Z"
     #endif
   }
-  Draw_Menu_Line(row, ICON_HomeOff);
+  Draw_Menu_Line(row, ICON_HomeOffset);
   Draw_Edit_Signed_Float3(row, HMI_ValueStruct.Home_OffZ_scaled);
 }
 
@@ -2602,8 +2608,8 @@ void Draw_HomeOff_Menu() {
         DWIN_Frame_TitleCopy(124, 431, 91, 12);                             // "Probe Offsets"
       #endif
       #ifdef USE_STRING_TITLES
-        Draw_Menu_LineF(1, ICON_ProbeOffX, GET_TEXT_F(MSG_ZPROBE_XOFFSET));  // Probe X Offset
-        Draw_Menu_LineF(2, ICON_ProbeOffY, GET_TEXT_F(MSG_ZPROBE_YOFFSET));  // Probe Y Offset
+        Draw_Menu_Line(1, ICON_ProbeOffsetX, GET_TEXT_F(MSG_ZPROBE_XOFFSET));  // Probe X Offset
+        Draw_Menu_Line(2, ICON_ProbeOffsetY, GET_TEXT_F(MSG_ZPROBE_YOFFSET));  // Probe Y Offset
       #else
         say_probe_offs_en(1); say_x_en(75, 1);  // "Probe Offset X"
         say_probe_offs_en(2); say_y_en(75, 2);  // "Probe Offset Y"
@@ -2615,6 +2621,7 @@ void Draw_HomeOff_Menu() {
 
     if (select_item.now != CASE_BACK) Draw_Menu_Cursor(select_item.now);
   }
+
 #endif
 
 #include "../../../libs/buzzer.h"
@@ -2633,7 +2640,7 @@ void HMI_AudioFeedback(const bool success=true) {
 
 // Prepare
 void HMI_Prepare() {
-  ENCODER_DiffState encoder_diffState = get_encoder_state();
+  EncoderState encoder_diffState = get_encoder_state();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
 
   // Avoid flicker by updating only the previous menu
@@ -2704,7 +2711,7 @@ void HMI_Prepare() {
         #endif
         break;
 
-      case PREPARE_CASE_DISA: queue.inject_P(PSTR("M84")); break;
+      case PREPARE_CASE_DISA: queue.inject(F("M84")); break;
 
       case PREPARE_CASE_HOME: // Homing
         checkkey = Last_Prepare;
@@ -2722,7 +2729,7 @@ void HMI_Prepare() {
             EncoderRate.enabled = true;
           #else
             // Apply workspace offset, making the current position 0,0,0
-            queue.inject_P(PSTR("G92 X0 Y0 Z0"));
+            queue.inject(F("G92 X0 Y0 Z0"));
             HMI_AudioFeedback();
           #endif
           break;
@@ -2847,7 +2854,7 @@ void Draw_Temperature_Menu() {
 
 // Control
 void HMI_Control() {
-  ENCODER_DiffState encoder_diffState = get_encoder_state();
+  EncoderState encoder_diffState = get_encoder_state();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
 
   // Avoid flicker by updating only the previous menu
@@ -2932,28 +2939,25 @@ void HMI_Control() {
   DWIN_UpdateLCD();
 }
 
-
 #if HAS_ONESTEP_LEVELING
-
   // Leveling
   void HMI_Leveling() {
     Popup_Window_Leveling();
     DWIN_UpdateLCD();
-    queue.inject_P(PSTR("G28O\nG29"));
+    queue.inject(F("G28O\nG29"));
   }
-
 #endif
 
 // Axis Move
 void HMI_AxisMove() {
-  ENCODER_DiffState encoder_diffState = get_encoder_state();
+  EncoderState encoder_diffState = get_encoder_state();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
 
   #if ENABLED(PREVENT_COLD_EXTRUSION)
     // popup window resume
-    if (HMI_flag.ETempTooLow_flag) {
+    if (HMI_flag.cold_flag) {
       if (encoder_diffState == ENCODER_DIFF_ENTER) {
-        HMI_flag.ETempTooLow_flag = false;
+        HMI_flag.cold_flag = false;
         HMI_ValueStruct.Move_E_scaled = current_position.e * MINUNITMULT;
         Draw_Move_Menu();
         Draw_Edit_Float3(1, HMI_ValueStruct.Move_X_scaled);
@@ -3003,7 +3007,7 @@ void HMI_AxisMove() {
           case 4: // Extruder
             #if ENABLED(PREVENT_COLD_EXTRUSION)
               if (thermalManager.tooColdToExtrude(0)) {
-                HMI_flag.ETempTooLow_flag = true;
+                HMI_flag.cold_flag = true;
                 Popup_Window_ETempTooLow();
                 DWIN_UpdateLCD();
                 return;
@@ -3022,7 +3026,7 @@ void HMI_AxisMove() {
 
 // TemperatureID
 void HMI_Temperature() {
-  ENCODER_DiffState encoder_diffState = get_encoder_state();
+  EncoderState encoder_diffState = get_encoder_state();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
 
   // Avoid flicker by updating only the previous menu
@@ -3090,7 +3094,7 @@ void HMI_Temperature() {
           }
           else {
             #ifdef USE_STRING_HEADINGS
-              Draw_Title(PREHEAT_1_LABEL " Settings"); // TODO: GET_TEXT_F
+              Draw_Title(F(PREHEAT_1_LABEL " Settings")); // TODO: GET_TEXT_F
             #else
               DWIN_Frame_TitleCopy(56, 15, 85, 14);                       // "Temperature"  TODO: "PLA Settings"
             #endif
@@ -3169,7 +3173,7 @@ void HMI_Temperature() {
           }
           else {
             #ifdef USE_STRING_HEADINGS
-              Draw_Title("ABS Settings"); // TODO: GET_TEXT_F
+              Draw_Title(F("ABS Settings")); // TODO: GET_TEXT_F
             #else
               DWIN_Frame_TitleCopy(56, 15, 85, 14);                       // "Temperature"  TODO: "ABS Settings"
             #endif
@@ -3252,7 +3256,7 @@ void Draw_Max_Speed_Menu() {
   }
   else {
     #ifdef USE_STRING_HEADINGS
-      Draw_Title("Max Speed (mm/s)"); // TODO: GET_TEXT_F
+      Draw_Title(F("Max Speed (mm/s)")); // TODO: GET_TEXT_F
     #else
       DWIN_Frame_TitleCopy(144, 16, 46, 11);                  // "Max Speed (mm/s)"
     #endif
@@ -3449,7 +3453,7 @@ void Draw_Steps_Menu() {
 
 // Motion
 void HMI_Motion() {
-  ENCODER_DiffState encoder_diffState = get_encoder_state();
+  EncoderState encoder_diffState = get_encoder_state();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
 
   // Avoid flicker by updating only the previous menu
@@ -3497,7 +3501,7 @@ void HMI_Motion() {
 
 // Advanced Settings
 void HMI_AdvSet() {
-  ENCODER_DiffState encoder_diffState = get_encoder_state();
+  EncoderState encoder_diffState = get_encoder_state();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
 
   // Avoid flicker by updating only the previous menu
@@ -3594,7 +3598,7 @@ void HMI_AdvSet() {
 
   // Home Offset
   void HMI_HomeOff() {
-    ENCODER_DiffState encoder_diffState = get_encoder_state();
+    EncoderState encoder_diffState = get_encoder_state();
     if (encoder_diffState == ENCODER_DIFF_NO) return;
 
     // Avoid flicker by updating only the previous menu
@@ -3633,7 +3637,7 @@ void HMI_AdvSet() {
   }
 
   void HMI_HomeOffN(const AxisEnum axis, float &posScaled, const_float_t lo, const_float_t hi) {
-    ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+    EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
     if (encoder_diffState == ENCODER_DIFF_NO) return;
 
     if (Apply_Encoder(encoder_diffState, posScaled)) {
@@ -3654,9 +3658,10 @@ void HMI_AdvSet() {
 #endif // HAS_HOME_OFFSET
 
 #if HAS_ONESTEP_LEVELING
+
   // Probe Offset
   void HMI_ProbeOff() {
-    ENCODER_DiffState encoder_diffState = get_encoder_state();
+    EncoderState encoder_diffState = get_encoder_state();
     if (encoder_diffState == ENCODER_DIFF_NO) return;
 
     // Avoid flicker by updating only the previous menu
@@ -3689,7 +3694,7 @@ void HMI_AdvSet() {
   }
 
   void HMI_ProbeOffN(float &posScaled, float &offset_ref) {
-    ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+    EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
     if (encoder_diffState == ENCODER_DIFF_NO) return;
 
     if (Apply_Encoder(encoder_diffState, posScaled)) {
@@ -3710,7 +3715,7 @@ void HMI_AdvSet() {
 
 // Info
 void HMI_Info() {
-  ENCODER_DiffState encoder_diffState = get_encoder_state();
+  EncoderState encoder_diffState = get_encoder_state();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
   if (encoder_diffState == ENCODER_DIFF_ENTER) {
     #if HAS_ONESTEP_LEVELING
@@ -3727,7 +3732,7 @@ void HMI_Info() {
 
 // Tune
 void HMI_Tune() {
-  ENCODER_DiffState encoder_diffState = get_encoder_state();
+  EncoderState encoder_diffState = get_encoder_state();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
 
   // Avoid flicker by updating only the previous menu
@@ -3798,7 +3803,7 @@ void HMI_Tune() {
             EncoderRate.enabled = true;
           #else
             // Apply workspace offset, making the current position 0,0,0
-            queue.inject_P(PSTR("G92 X0 Y0 Z0"));
+            queue.inject(F("G92 X0 Y0 Z0"));
             HMI_AudioFeedback();
           #endif
         break;
@@ -3813,7 +3818,7 @@ void HMI_Tune() {
 
   // PLA Preheat
   void HMI_PLAPreheatSetting() {
-    ENCODER_DiffState encoder_diffState = get_encoder_state();
+    EncoderState encoder_diffState = get_encoder_state();
     if (encoder_diffState == ENCODER_DIFF_NO) return;
 
     // Avoid flicker by updating only the previous menu
@@ -3869,7 +3874,7 @@ void HMI_Tune() {
 
   // ABS Preheat
   void HMI_ABSPreheatSetting() {
-    ENCODER_DiffState encoder_diffState = get_encoder_state();
+    EncoderState encoder_diffState = get_encoder_state();
     if (encoder_diffState == ENCODER_DIFF_NO) return;
 
     // Avoid flicker by updating only the previous menu
@@ -3927,7 +3932,7 @@ void HMI_Tune() {
 
 // Max Speed
 void HMI_MaxSpeed() {
-  ENCODER_DiffState encoder_diffState = get_encoder_state();
+  EncoderState encoder_diffState = get_encoder_state();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
 
   // Avoid flicker by updating only the previous menu
@@ -3956,7 +3961,7 @@ void HMI_MaxSpeed() {
 
 // Max Acceleration
 void HMI_MaxAcceleration() {
-  ENCODER_DiffState encoder_diffState = get_encoder_state();
+  EncoderState encoder_diffState = get_encoder_state();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
 
   // Avoid flicker by updating only the previous menu
@@ -3986,7 +3991,7 @@ void HMI_MaxAcceleration() {
 #if HAS_CLASSIC_JERK
   // Max Jerk
   void HMI_MaxJerk() {
-    ENCODER_DiffState encoder_diffState = get_encoder_state();
+    EncoderState encoder_diffState = get_encoder_state();
     if (encoder_diffState == ENCODER_DIFF_NO) return;
 
     // Avoid flicker by updating only the previous menu
@@ -4016,7 +4021,7 @@ void HMI_MaxAcceleration() {
 
 // Step
 void HMI_Step() {
-  ENCODER_DiffState encoder_diffState = get_encoder_state();
+  EncoderState encoder_diffState = get_encoder_state();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
 
   // Avoid flicker by updating only the previous menu
@@ -4107,7 +4112,7 @@ void EachMomentUpdate() {
       TERN_(HAS_HEATED_BED, resume_bed_temp = thermalManager.degTargetBed());
       thermalManager.disable_all_heaters();
     #endif
-    queue.inject_P(PSTR("G1 F1200 X0 Y0"));
+    queue.inject(F("G1 F1200 X0 Y0"));
   }
 
   if (card.isPrinting() && checkkey == PrintProcess) { // print process
@@ -4172,12 +4177,12 @@ void EachMomentUpdate() {
       DWIN_UpdateLCD();
 
       while (recovery_flag) {
-        ENCODER_DiffState encoder_diffState = Encoder_ReceiveAnalyze();
+        EncoderState encoder_diffState = Encoder_ReceiveAnalyze();
         if (encoder_diffState != ENCODER_DIFF_NO) {
           if (encoder_diffState == ENCODER_DIFF_ENTER) {
             recovery_flag = false;
             if (HMI_flag.select_flag) break;
-            TERN_(POWER_LOSS_RECOVERY, queue.inject_P(PSTR("M1000C")));
+            TERN_(POWER_LOSS_RECOVERY, queue.inject(F("M1000C")));
             HMI_StartFrame(true);
             return;
           }
@@ -4190,7 +4195,7 @@ void EachMomentUpdate() {
 
       select_print.set(0);
       HMI_ValueStruct.show_mode = 0;
-      queue.inject_P(PSTR("M1000"));
+      queue.inject(F("M1000"));
       Goto_PrintProcess();
       Draw_Status_Area(true);
     }
@@ -4282,16 +4287,16 @@ void DWIN_CompletedLeveling() {
   if (checkkey == Leveling) Goto_MainMenu();
 }
 
-void DWIN_StatusChanged(const char *text) {
+void DWIN_StatusChanged(const char * const cstr/*=nullptr*/) {
   DWIN_Draw_Rectangle(1, Color_Bg_Blue, 0, STATUS_Y, DWIN_WIDTH, STATUS_Y + 24);
-  const int8_t x = _MAX(0U, DWIN_WIDTH - strlen_P(text) * MENU_CHR_W) / 2;
-  DWIN_Draw_String(false, font8x16, Color_White, Color_Bg_Blue, x, STATUS_Y + 3, F(text));
+  const int8_t x = _MAX(0U, DWIN_WIDTH - strlen(cstr) * MENU_CHR_W) / 2;
+  DWIN_Draw_String(false, font8x16, Color_White, Color_Bg_Blue, x, STATUS_Y + 3, cstr);
   DWIN_UpdateLCD();
 }
 
-void DWIN_StatusChanged_P(PGM_P const pstr) {
-  char str[strlen_P((const char*)pstr) + 1];
-  strcpy_P(str, (const char*)pstr);
+void DWIN_StatusChanged(FSTR_P const fstr) {
+  char str[strlen_P(FTOP(fstr)) + 1];
+  strcpy_P(str, FTOP(fstr));
   DWIN_StatusChanged(str);
 }
 

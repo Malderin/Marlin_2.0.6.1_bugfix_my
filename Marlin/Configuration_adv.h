@@ -1603,7 +1603,7 @@
    * Set STATUS_EXPIRE_SECONDS to zero to never clear the status.
    * This will prevent position updates from being displayed.
    */
-  #if ENABLED(U8GLIB_ST7920)
+  #if IS_U8GLIB_ST7920
     // Enable this option and reduce the value to optimize screen updates.
     // The normal delay is 10µs. Use the lowest value that still gives a reliable display.
     //#define DOGM_SPI_DELAY_US 5
@@ -2425,6 +2425,8 @@
   #define PAUSE_PARK_NOZZLE_TIMEOUT           45  // (seconds) Time limit before the nozzle is turned off for safety.
   #define FILAMENT_CHANGE_ALERT_BEEPS         10  // Number of alert beeps to play when a response is needed.
   #define PAUSE_PARK_NO_STEPPER_TIMEOUT           // Enable for XYZ steppers to stay powered on during filament change.
+  //#define FILAMENT_CHANGE_RESUME_ON_INSERT      // Automatically continue / load filament when runout sensor is triggered again.
+  //#define PAUSE_REHEAT_FAST_RESUME              // Reduce number of waits by not prompting again post-timeout before continuing.
 
   //#define PARK_HEAD_ON_PAUSE                    // Park the nozzle during pause and filament change.
   //#define HOME_BEFORE_FILAMENT_CHANGE           // If needed, home before parking for filament change
