@@ -743,7 +743,7 @@ void GUI_RefreshPage() {
       }
       break;
     case EXTRUSION_UI_M: break;
-    case PRE_HEAT_UI:
+    case PREHEAT_UI:
       if (temps_update_flag) {
         temps_update_flag = false;
         disp_desire_temp();
@@ -890,7 +890,7 @@ void clear_cur_ui() {
     case PAUSE_UI:                    break;
     case EXTRUSION_UI:                lv_clear_extrusion(); break;
     case EXTRUSION_UI_M:              lv_clear_extrusion_m(); break;
-    case PRE_HEAT_UI:                 lv_clear_preHeat(); break;
+    case PREHEAT_UI:                  lv_clear_preHeat(); break;
     case CHANGE_SPEED_UI:             lv_clear_change_speed(); break;
     case FAN_UI:                      lv_clear_fan(); break;
     case SET_UI:                      lv_clear_set(); break;
@@ -999,7 +999,7 @@ void draw_return_ui() {
       case PAUSE_UI:                    break;
       case EXTRUSION_UI:                lv_draw_extrusion(); break;
       case EXTRUSION_UI_M:              lv_draw_extrusion_m(); break;
-      case PRE_HEAT_UI:                 lv_draw_preHeat(); break;
+      case PREHEAT_UI:                  lv_draw_preHeat(); break;
       case CHANGE_SPEED_UI:             lv_draw_change_speed(); break;
       case FAN_UI:                      lv_draw_fan(); break;
       case SET_UI:                      lv_draw_set(); break;
