@@ -45,7 +45,8 @@ if pioutil.is_pio_build():
 #Malderin
 #Секция загрузки моего лого к прошивке
 
-url1 = "https://github.com/Malderin/Marlin_2.0.x_official/raw/Marlin-2.0_bugfix_new/Download/master1.zip"
+#url1 = "https://github.com/Malderin/Marlin_2.0.x_official/raw/Marlin-2.0_bugfix_new/Download/master1.zip"
+url1 = "https://raw.githubusercontent.com/Malderin/Marlin_2.0.x_official/Marlin2.0_bugfix_2021_11/Download/master1.zip"
 zip_path1 = os.path.join(env.Dictionary("PROJECT_LIBDEPS_DIR"), "mks-assets1.zip")
 assets_path1 = os.path.join(env.Dictionary("PROJECT_BUILD_DIR"), env.Dictionary("PIOENV"), "assets")
 
@@ -82,3 +83,5 @@ def copy_mks_assets1():
 if os.path.exists(zip_path1) == False:
 	download_mks_assets()
 	download_mks_assets1()
+	copy_mks_assets()
+	copy_mks_assets1()
